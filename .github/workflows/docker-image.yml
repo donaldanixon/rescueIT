@@ -24,4 +24,4 @@ jobs:
           docker push swisskiwi2004/rescueit-test:$(date +%s)
 
 env:
-    API_KEY: ${{ secrets.API_KEY }}
+    RESCUEITDBpassword: ${{ secrets.RESCUEITDB_PASS }}
