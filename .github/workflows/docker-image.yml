@@ -22,7 +22,7 @@ jobs:
       run: docker push swisskiwi2004/rescueit-test:1.1
       env:
         DOCKER_USERNAME: swisskiwi2004
-        DOCKER_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
+        DOCKER_PASSWORD: ${{ secrets.DOCKER_TOKEN }}
 
 env:
     RESCUEITDBpassword: ${{ secrets.RESCUEITDB_PASS }}
