@@ -21,7 +21,7 @@ jobs:
     - name: Push Docker image
       run: docker push swisskiwi2004/rescueit-test:1.1
       env:
-        DOCKER_USERNAME: yourusername
+        DOCKER_USERNAME: swisskiwi2004
         DOCKER_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
 
 env:
