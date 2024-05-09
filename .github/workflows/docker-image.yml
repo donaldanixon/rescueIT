@@ -16,12 +16,13 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
     - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag swisskiwi2004/rescueit-test:$(date +%s)
+      run: docker build . --file dockerfile --tag swisskiwi2004/rescueit-test:latest
 
     - name: Push Docker image
-      run: |
-          echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u swisskiwi2004 --password-stdin
-          docker push swisskiwi2004/rescueit-test:$(date +%s)
+      run: docker push swisskiwi2004/rescueit-test:latest
+      env:
+        DOCKER_USERNAME: yourusername
+        DOCKER_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
 
 env:
     RESCUEITDBpassword: ${{ secrets.RESCUEITDB_PASS }}

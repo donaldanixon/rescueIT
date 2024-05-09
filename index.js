@@ -120,7 +120,7 @@ app.get('/users/register', (req, res) => {
         })
 })
 
-
+// - List users
 app.get('/users', (req, res) => {
     console.log('Fetching users...')
     connection.query(getUsersQuery, (err, results) => {
@@ -133,5 +133,58 @@ app.get('/users', (req, res) => {
             })
         }
     })
+}
+)
+
+// - Update password
+app._router.get('/users/updatepassword', (req, res) => {
+    console.log('Updating password...')
+    let { username, oldpassword, newpassword } = req.query;
+    if (!username) {
+        return res.send("Username cannot be empty")
+    }
+    if (!oldpassword) {
+        return res.send("Old Password cannot be empty")
+    }
+    if (!newpassword) {
+        return res.send("New Password cannot be empty")
+    }
+    connection.query('SELECT * FROM users WHERE username = ?', [username], (err, results) => {
+        if (err) {
+            return res.send(err)
+        }
+        else {
+            bcrypt.compare(password, results[0].userpswd, (err, result) => {
+                
+                if (err) {
+                    return res.send(err)
+                }
+                else {
+                    if (result === true){
+                        console.log('Old password matches, updating password...')
+                        bcrypt.hash(newpassword, 10, (err, hash) => {
+                            if (err) {
+                                return res.send(err)
+                            }
+                            connection.query('UPDATE users SET userpswd = ? WHERE username = ?', [hash, username], (err, res) => {
+                                if (err) {
+                                    return res.send(err)
+                                }
+                                else {
+                                    return res.json({
+                                        user: username
+                                    })
+                                }
+                            })
+                        })
+                    }
+                    else {
+                        console.log('Incorrect password')
+                        return res.send('Incorrect password')
+                    }
+                }
+            })
+        }
+    });
 }
 )
