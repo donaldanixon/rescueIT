@@ -1,0 +1,27 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Build the Docker image
+      run: docker build . --file Dockerfile --tag swisskiwi2004/rescueit-test:$(date +%s)
+
+    - name: Push Docker image
+      run: |
+          echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u swisskiwi2004 --password-stdin
+          docker push swisskiwi2004/rescueit-test:$(date +%s)
+
+env:
+    API_KEY: ${{ secrets.API_KEY }}
