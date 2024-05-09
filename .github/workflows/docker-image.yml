@@ -16,10 +16,10 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
     - name: Build the Docker image
-      run: docker build . --file dockerfile --tag swisskiwi2004/rescueit-test:latest
+      run: docker build . --file dockerfile --tag swisskiwi2004/rescueit-test:1.1
 
     - name: Push Docker image
-      run: docker push swisskiwi2004/rescueit-test:latest
+      run: docker push swisskiwi2004/rescueit-test:1.1
       env:
         DOCKER_USERNAME: yourusername
         DOCKER_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
