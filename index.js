@@ -47,12 +47,15 @@ app.post('/users/login', (req, res) => {
     if (!password) {
         return res.send("Password cannot be empty")
     }
-    console.log('Logging in user ?', [username])
+    console.log('Logging in ' + username)
     connection.query('SELECT * FROM users WHERE username = ?', [username], (err, results) => {
         if (err) {
             return res.send(err)
         }
         else {
+            if (results.length === 0) {
+                return res.send('User not found');
+            }
             bcrypt.compare(password, results[0].userpswd, (err, result) => {
                 
                 if (err) {
