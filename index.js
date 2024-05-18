@@ -25,6 +25,7 @@ connection.connect(err => {
 // Setup Express App
 const app = express();
 app.use(cors());
+app.use(express.json());
 app.listen(8080, () => {
     console.log('Listening on port 8080')
     }
@@ -53,6 +54,7 @@ app.post('/users/login', (req, res) => {
             return res.send(err)
         }
         else {
+            console.log(results)
             if (results.length === 0) {
                 return res.send('User not found');
             }
@@ -66,7 +68,8 @@ app.post('/users/login', (req, res) => {
                         console.log('Login successful')
                         return res.json({
                             user: results[0].username,
-                            role: results[0].userrole
+                            role: results[0].userrole,
+                            userID: results[0].userID
                         })
                     }
                     else {
@@ -140,7 +143,7 @@ app.get('/users', (req, res) => {
 )
 
 // - Update password
-app._router.get('/users/updatepassword', (req, res) => {
+app.get('/users/updatepassword', (req, res) => {
     console.log('Updating password...')
     let { username, oldpassword, newpassword } = req.query;
     if (!username) {
@@ -189,5 +192,95 @@ app._router.get('/users/updatepassword', (req, res) => {
             })
         }
     });
+}
+)
+
+// - List all animals
+app.get('/animals', (req, res) => {
+    console.log('Fetching animals...')
+    connection.query('SELECT * FROM animals', (err, results) => {       
+        if(err){
+            return res.send(err)
+        }
+        else {
+            return res.json({   
+                data: results
+            })
+        }})    
+}
+)
+
+// - Add animal
+app.post('/animals/add', (req, res) => {
+    console.log('Adding animal...')
+    console.log(req.body)
+    let { animalName, animalDOB, animalMicrochipNum, species, breed, gender, colour, litterID, photoFileName, fostererID, surrenderedByID, desexed, awaitingDesex, awaitingFoster, underVetCare } = req.body;
+    if (!animalName) {
+        return res.send("Animal name cannot be empty")
+    }
+    if (!species) {
+        return res.send("Species cannot be empty")
+    }
+    connection.query('INSERT INTO animals (animalName, animalDOB, animalMicrochipNum, species, breed, gender, colour, litterID, photoFileName, fostererID, surrenderedByID, desexed, awaitingDesex, awaitingFoster, underVetCare) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [animalName, animalDOB, animalMicrochipNum, species, breed, gender, colour, litterID, photoFileName, fostererID, surrenderedByID, desexed, awaitingDesex, awaitingFoster, underVetCare], (err, results) => {
+        if (err) {
+            return res.send(err)
+        }
+        else {
+            return res.json({
+                animalName: animalName
+            })
+        }
+    })
+}
+)
+
+// - Find animal
+app.get('/animals/animal', (req, res) => {
+    console.log('Fetching animal...')
+    let { searchTerm, searchType } = req.query;
+    var searchQuery = "";
+
+    if (!searchTerm) {
+        return res.send("Search term cannot be empty")
+    }
+
+    if (!searchType) {
+        return res.send("Search type cannot be empty")
+    }
+
+    if (searchType === "animal") {
+        if(parseInt(searchTerm)){
+            searchQuery = 'SELECT * FROM animals WHERE animalID = ' + searchTerm
+        }
+        else{
+            searchQuery = 'SELECT * FROM animals WHERE animalName like "%' + searchTerm + '%"'
+        }
+    }
+    else if (searchType === "litter") {
+        if(parseInt(searchTerm)){
+            searchQuery = 'SELECT * FROM animals WHERE litterID = ' + searchTerm
+        }
+        else{
+            searchQuery = 'SELECT * FROM animals WHERE litterID IN (SELECT litterID FROM litters WHERE litterName like "%' + searchTerm + '%");'
+        }
+    }
+    else if (searchType === "fosterer") {
+        if(parseInt(searchTerm)){
+            searchQuery = 'SELECT * FROM animals WHERE fostererID = ' + searchTerm
+        }
+        else{
+            searchQuery = 'SELECT * FROM animals WHERE fostererID IN (SELECT fostererID FROM fosterers WHERE fostererName like "%' + searchTerm + '%");'
+        }
+    }
+
+    connection.query(searchQuery, (err, results) => {       
+        if(err){
+            return res.send(err)
+        }
+        else {
+            return res.json({   
+                data: results
+            })
+        }})    
 }
 )
