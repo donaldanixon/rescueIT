@@ -2,7 +2,9 @@ const express = require('express');
 const cors = require('cors');
 const mysql = require('mysql');
 const bcrypt = require('bcrypt');
-const rateLimit = require('express-rate-limit')
+const rateLimit = require('express-rate-limit');
+const jwt = require('jsonwebtoken');
+const jwtSecret = process.env.RESCUEITJWTsecret;
 const rescueITDBpassword = process.env.RESCUEITDBpassword;
 
 // SQL Queries
@@ -38,6 +40,19 @@ const limiter = rateLimit({
     }
 });
 
+const authenticateToken = (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+  
+    if (!token) return res.sendStatus(401);
+  
+    jwt.verify(token, jwtSecret, (err, user) => {
+      if (err) return res.sendStatus(403);
+      req.user = user;
+      next();
+    });
+};
+
 app.use(limiter);
 app.use(cors());
 app.use(express.json());
@@ -49,7 +64,7 @@ app.listen(8080, () => {
 // Helper functions
 function invalidQuery(query) {
     // Define a regular expression pattern to match SQL keywords followed by a space
-    const sqlKeywords = /\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|TRUNCATE|REPLACE|GRANT|REVOKE)\s+/i;
+    const sqlKeywords = /\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|TRUNCATE|REPLACE|GRANT|REVOKE|=)\s+/i;
     
     // Test the query string against the regular expression pattern
     return sqlKeywords.test(query);
@@ -66,41 +81,43 @@ app.get('/', (req, res) => {
 app.post('/users/login', (req, res) => {
     let { username, password } = req.body;
     if (!username) {
-        return res.send("Username cannot be empty")
+        return res.status(400).send("Username cannot be empty")
     }
     if (!password) {
-        return res.send("Password cannot be empty")
+        return res.status(400).send("Password cannot be empty")
     }
     if (invalidQuery(username) || invalidQuery(password)) {
-        return res.send('Invalid query')
+        return res.status(400).send('Invalid query')
     }
     console.log('Logging in ' + username)
     connection.query('SELECT * FROM users WHERE username = ?', [username], (err, results) => {
         if (err) {
-            return res.send(err)
+            return res.status(400).send(err)
         }
         else {
             console.log(results)
             if (results.length === 0) {
-                return res.send('User not found');
+                return res.status(401).send('User not found');
             }
             bcrypt.compare(password, results[0].userpswd, (err, result) => {
                 
                 if (err) {
-                    return res.send(err)
+                    return res.status(400).send(err)
                 }
                 else {
                     if (result === true){
                         console.log('Login successful')
-                        return res.json({
-                            user: results[0].username,
-                            role: results[0].userrole,
-                            userID: results[0].userID
-                        })
+                        const token = jwt.sign({userId: results[0].userID, role: results[0].userrole, userName: results[0].username}, jwtSecret, {expiresIn: '1h'});
+                        return res.json({ 
+                            token: token,
+                            userId: results[0].userID, 
+                            role: results[0].userrole, 
+                            userName: results[0].username
+                        });
                     }
                     else {
                         console.log('Incorrect password')
-                        return res.send('Incorrect password')
+                        return res.status(401).send('Incorrect password')
                     }
                 }
             })
@@ -109,44 +126,44 @@ app.post('/users/login', (req, res) => {
 })
 
 // - Register
-app.get('/users/register', (req, res) => {
+app.get('/users/register', authenticateToken, (req, res) => {
     console.log('Registering user...')
         let { username, password, userrole } = req.body;
         
         // Ensure no empty fields
         if (!username) {
-            return res.send("Username cannot be empty")
+            return res.status(400).send("Username cannot be empty")
         }
         if (!password) {
-            return res.send("Password cannot be empty")
+            return res.status(400).send("Password cannot be empty")
         }
         if (!userrole) {
-            return res.send("User role cannot be empty")
+            return res.status(400).send("User role cannot be empty")
         }
 
         // Validate query
         if (invalidQuery(username) || invalidQuery(password) || invalidQuery(userrole)) {
-            return res.send('Invalid query')
+            return res.status(400).send('Invalid query')
         }
 
         // Validate username to check for uniqueness
         connection.query('SELECT * FROM users WHERE username = ?', [username], (err, results) => {
             if (err) {
-                return res.send(err)
+                return res.status(400).send(err)
             }
             else if (results.length > 0) {
-                return res.send('Username already exists')
+                return res.status(401).send('Username already exists')
             }
         })
 
         // Encrypt password and insert into database
         bcrypt.hash(password, 10, (err, hash) => {
             if (err) {
-                return res.send(err)
+                return res.status(400).send(err)
             }
             connection.query('INSERT INTO users (username, userpswd, userrole) VALUES (?, ?, ?)', [username, hash, userrole], (err, results) => {
                 if (err) {
-                    return res.send(err)
+                    return res.status(400).send(err)
                 }
                 else {
                     return res.json({
@@ -158,23 +175,21 @@ app.get('/users/register', (req, res) => {
 })
 
 // - List users
-app.get('/users', (req, res) => {
+app.get('/users', authenticateToken, (req, res) => {
     console.log('Fetching users...')
     connection.query(getUsersQuery, (err, results) => {
         if(err){
-            return res.send(err)
+            return res.status(400).send(err)
         }
         else {
-            return res.json({
-                data: results
-            })
+            return res.json({ results })
         }
     })
 }
 )
 
 // - Update password
-app.get('/users/updatepassword', (req, res) => {
+app.get('/users/updatepassword', authenticateToken, (req, res) => {
     console.log('Updating password...')
     let { username, oldpassword, newpassword } = req.body;
     if (!username) {
@@ -233,22 +248,20 @@ app.get('/users/updatepassword', (req, res) => {
 )
 
 // - List all animals
-app.get('/animals', (req, res) => {
+app.get('/animals', authenticateToken, (req, res) => {
     console.log('Fetching animals...')
     connection.query('SELECT * FROM animals', (err, results) => {       
         if(err){
             return res.send(err)
         }
         else {
-            return res.json({   
-                data: results
-            })
+            return res.json({ results })
         }})    
 }
 )
 
 // - Add animal
-app.post('/animals/add', (req, res) => {
+app.post('/animals/add', authenticateToken, (req, res) => {
     console.log('Adding animal...')
     let { animalName, animalDOB, animalMicrochipNum, species, breed, gender, colour, litterID, photoFileName, fostererID, surrenderedByID, desexed, awaitingDesex, awaitingFoster, underVetCare } = req.body;
     if (!animalName) {
@@ -278,7 +291,7 @@ app.post('/animals/add', (req, res) => {
 )
 
 // - Find animal
-app.get('/animals/animal', (req, res) => {
+app.post('/animals/animal', authenticateToken, (req, res) => {
     console.log('Fetching animal...')
     let { searchTerm, searchType } = req.body;
     var searchQuery = "";
@@ -296,53 +309,49 @@ app.get('/animals/animal', (req, res) => {
         return res.send('Invalid query')
     }
 
-    if (searchType === "animal") {
+    if (searchType === "Animal") {
         if(parseInt(searchTerm)){
-            searchQuery = 'SELECT * FROM animals WHERE animalID = ' + searchTerm
+            searchQuery = 'SELECT * FROM animals WHERE animalID = ' + searchTerm + ' ORDER BY animalID DESC;'
         }
         else{
-            searchQuery = 'SELECT * FROM animals WHERE animalName like "%' + searchTerm + '%"'
+            searchQuery = 'SELECT * FROM animals WHERE animalName like \'%' + searchTerm + '%\' ORDER BY animalID DESC;'
         }
     }
-    else if (searchType === "litter") {
+    else if (searchType === "Litter") {
         if(parseInt(searchTerm)){
-            searchQuery = 'SELECT * FROM animals WHERE litterID = ' + searchTerm
+            searchQuery = 'SELECT * FROM animals WHERE litterID = ' + searchTerm +' ORDER BY animalID DESC;'
         }
         else{
-            searchQuery = 'SELECT * FROM animals WHERE litterID IN (SELECT litterID FROM litters WHERE litterName like "%' + searchTerm + '%");'
+            searchQuery = 'SELECT * FROM animals WHERE litterID IN (SELECT litterID FROM litters WHERE litterName like \'%' + searchTerm + '%\') ORDER BY animalID DESC;'
         }
     }
-    else if (searchType === "fosterer") {
+    else if (searchType === "Fosterer") {
         if(parseInt(searchTerm)){
-            searchQuery = 'SELECT * FROM animals WHERE fostererID = ' + searchTerm
+            searchQuery = 'SELECT * FROM animals WHERE fostererID = ' + searchTerm + ' ORDER BY animalID DESC;'
         }
         else{
-            searchQuery = 'SELECT * FROM animals WHERE fostererID IN (SELECT fostererID FROM fosterers WHERE fostererName like "%' + searchTerm + '%");'
+            searchQuery = 'SELECT * FROM animals WHERE fostererID IN (SELECT fostererID FROM fosterers WHERE fostererName like \'%' + searchTerm + '%\') ORDER BY animalID DESC;'
         }
     }
-
+    console.log(searchQuery)
     connection.query(searchQuery, (err, results) => {       
         if(err){
             return res.send(err)
         }
         else {
-            return res.json({   
-                data: results
-            })
+            return res.json({ results })
         }})    
 }
 )
 
-app.get('/fosterers', (req, res) => {
+app.get('/fosterers', authenticateToken, (req, res) => {
     console.log('Fetching fosterers...')
     connection.query('SELECT * FROM fosterers', (err, results) => {
         if(err){
             return res.send(err)
         }
         else {
-            return res.json({
-                data: results
-            })
+            return res.json({ results })
         }
     })  
 }  
