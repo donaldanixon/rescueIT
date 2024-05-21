@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const mysql = require('mysql');
 const bcrypt = require('bcrypt');
+const rateLimit = require('express-rate-limit')
 const rescueITDBpassword = process.env.RESCUEITDBpassword;
 
 // SQL Queries
@@ -24,12 +25,35 @@ connection.connect(err => {
 
 // Setup Express App
 const app = express();
+
+const limiter = rateLimit({
+    windowMs:  60 * 1000, // 1 minutes
+    max: 20,
+    standardHeaders: true,
+    legacyHeaders: false,
+    handler: (req, res, next, options) => {
+        res.status(429).json({
+          message: 'Too many requests, please try again later.',
+        });
+    }
+});
+
+app.use(limiter);
 app.use(cors());
 app.use(express.json());
 app.listen(8080, () => {
     console.log('Listening on port 8080')
     }
 );
+
+// Helper functions
+function invalidQuery(query) {
+    // Define a regular expression pattern to match SQL keywords followed by a space
+    const sqlKeywords = /\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|TRUNCATE|REPLACE|GRANT|REVOKE)\s+/i;
+    
+    // Test the query string against the regular expression pattern
+    return sqlKeywords.test(query);
+}
 
 // Routes
 // - Front page
@@ -40,13 +64,15 @@ app.get('/', (req, res) => {
 
 // - Login
 app.post('/users/login', (req, res) => {
-    console.log(req.query)
-    let { username, password } = req.query;
+    let { username, password } = req.body;
     if (!username) {
         return res.send("Username cannot be empty")
     }
     if (!password) {
         return res.send("Password cannot be empty")
+    }
+    if (invalidQuery(username) || invalidQuery(password)) {
+        return res.send('Invalid query')
     }
     console.log('Logging in ' + username)
     connection.query('SELECT * FROM users WHERE username = ?', [username], (err, results) => {
@@ -85,7 +111,7 @@ app.post('/users/login', (req, res) => {
 // - Register
 app.get('/users/register', (req, res) => {
     console.log('Registering user...')
-        let { username, password, userrole } = req.query;
+        let { username, password, userrole } = req.body;
         
         // Ensure no empty fields
         if (!username) {
@@ -96,6 +122,11 @@ app.get('/users/register', (req, res) => {
         }
         if (!userrole) {
             return res.send("User role cannot be empty")
+        }
+
+        // Validate query
+        if (invalidQuery(username) || invalidQuery(password) || invalidQuery(userrole)) {
+            return res.send('Invalid query')
         }
 
         // Validate username to check for uniqueness
@@ -145,7 +176,7 @@ app.get('/users', (req, res) => {
 // - Update password
 app.get('/users/updatepassword', (req, res) => {
     console.log('Updating password...')
-    let { username, oldpassword, newpassword } = req.query;
+    let { username, oldpassword, newpassword } = req.body;
     if (!username) {
         return res.send("Username cannot be empty")
     }
@@ -155,6 +186,12 @@ app.get('/users/updatepassword', (req, res) => {
     if (!newpassword) {
         return res.send("New Password cannot be empty")
     }
+
+    // Validate query
+    if (invalidQuery(username) || invalidQuery(oldpassword) || invalidQuery(newpassword)) {
+        return res.send('Invalid query')
+    }
+
     connection.query('SELECT * FROM users WHERE username = ?', [username], (err, results) => {
         if (err) {
             return res.send(err)
@@ -213,7 +250,6 @@ app.get('/animals', (req, res) => {
 // - Add animal
 app.post('/animals/add', (req, res) => {
     console.log('Adding animal...')
-    console.log(req.body)
     let { animalName, animalDOB, animalMicrochipNum, species, breed, gender, colour, litterID, photoFileName, fostererID, surrenderedByID, desexed, awaitingDesex, awaitingFoster, underVetCare } = req.body;
     if (!animalName) {
         return res.send("Animal name cannot be empty")
@@ -221,6 +257,13 @@ app.post('/animals/add', (req, res) => {
     if (!species) {
         return res.send("Species cannot be empty")
     }
+
+    // Validate query
+    if (invalidQuery(animalName) || invalidQuery(species)) {
+        return res.send('Invalid query')
+    }
+
+    // Insert into database
     connection.query('INSERT INTO animals (animalName, animalDOB, animalMicrochipNum, species, breed, gender, colour, litterID, photoFileName, fostererID, surrenderedByID, desexed, awaitingDesex, awaitingFoster, underVetCare) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [animalName, animalDOB, animalMicrochipNum, species, breed, gender, colour, litterID, photoFileName, fostererID, surrenderedByID, desexed, awaitingDesex, awaitingFoster, underVetCare], (err, results) => {
         if (err) {
             return res.send(err)
@@ -237,7 +280,7 @@ app.post('/animals/add', (req, res) => {
 // - Find animal
 app.get('/animals/animal', (req, res) => {
     console.log('Fetching animal...')
-    let { searchTerm, searchType } = req.query;
+    let { searchTerm, searchType } = req.body;
     var searchQuery = "";
 
     if (!searchTerm) {
@@ -246,6 +289,11 @@ app.get('/animals/animal', (req, res) => {
 
     if (!searchType) {
         return res.send("Search type cannot be empty")
+    }
+
+    // Validate query
+    if (invalidQuery(searchTerm) || invalidQuery(searchType)) {
+        return res.send('Invalid query')
     }
 
     if (searchType === "animal") {
@@ -284,3 +332,18 @@ app.get('/animals/animal', (req, res) => {
         }})    
 }
 )
+
+app.get('/fosterers', (req, res) => {
+    console.log('Fetching fosterers...')
+    connection.query('SELECT * FROM fosterers', (err, results) => {
+        if(err){
+            return res.send(err)
+        }
+        else {
+            return res.json({
+                data: results
+            })
+        }
+    })  
+}  
+);
