@@ -44,10 +44,10 @@ const authenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
   
-    if (!token || !authHeader) return res.sendStatus(401);
+    if (!token) return res.status(401).send("Missing header");
   
     jwt.verify(token, jwtSecret, (err, user) => {
-      if (err) return res.sendStatus(401);
+      if (err) return res.status(401).send("Invalid token");
       req.user = user;
       next();
     });
