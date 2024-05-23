@@ -71,7 +71,7 @@ function invalidQuery(query) {
 // Routes
 // - Front page
 app.get('/', (req, res) => {
-    res.send('Welcome to the RescueIt API! We have cookies');
+    res.send('Welcome to the RescueIt API! We have cookies and donuts');
     }
 );
 
