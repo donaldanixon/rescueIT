@@ -275,7 +275,7 @@ app.post('/animals/add', authenticateToken, (req, res) => {
     if (typeof(animalName) !== 'string' || animalName.length > 255) {
         return res.status(400).send('Not a valid animal name')
     }
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(animalDOB)) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(animalDOB) && animalDOB !== "") {
         return res.status(400).send('Not a valid DOB')
     }
     if (typeof(animalMicrochipNum) !== 'string' || animalDOB.length > 255) {
@@ -326,13 +326,13 @@ app.post('/animals/add', authenticateToken, (req, res) => {
     if (typeof(deceased) !== 'boolean') {
         return res.status(400).send('Not a valid deceased value')
     }
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(deceasedDate)) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(deceasedDate) && deceasedDate !== "") {
         return res.status(400).send('Not a valid deceased date')
     }
     if (typeof(deceasedReason) !== 'string' || deceasedReason.length > 255) {
         return res.status(400).send('Not a valid deceased reason')
     }
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(incomingDate)) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(incomingDate) && incomingDate !== "") {
         return res.status(400).send('Not a valid incoming date')
     }
 
