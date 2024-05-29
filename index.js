@@ -339,7 +339,6 @@ app.post('/animals/add', authenticateToken, (req, res) => {
         return res.status(400).send('Not a valid incoming date')
     }
 
-
     // Insert into database
     connection.query('INSERT INTO animals (animalName, animalDOB, animalMicrochipNum, species, breed, gender, colour, litterID, photoFileName, fostererID, surrenderedByID, desexed, awaitingDesex, awaitingFoster, underVetCare, deceased, deceasedDate, deceasedReason, incomingDate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);', [animalName, animalDOB, animalMicrochipNum, species, breed, gender, colour, litterID, photoFileName, fostererID, surrenderedByID, desexed, awaitingDesex, awaitingFoster, underVetCare, deceased, deceasedDate, deceasedReason, incomingDate], (err, results) => {
         if (err) {
@@ -347,7 +346,7 @@ app.post('/animals/add', authenticateToken, (req, res) => {
         }
         else {
             return res.json({
-                animalID: results[0].animalID
+                created: true
             })
         }
     })
@@ -403,7 +402,7 @@ app.post('/animals/animal', authenticateToken, (req, res) => {
             return res.status(400).send(err)
         }
         else {
-            return res.json({ results })
+            return res.json( results )
         }})    
 }
 );
@@ -455,11 +454,12 @@ app.post('/animals/update', authenticateToken, (req, res) => {
         }
     })
 
+    
     // Validate typings
     if (typeof(animalName) !== 'string' || animalName.length > 255) {
         return res.status(400).send('Not a valid animal name')
     }
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(animalDOB)) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(animalDOB) && animalDOB !== "") {
         return res.status(400).send('Not a valid DOB')
     }
     if (typeof(animalMicrochipNum) !== 'string' || animalDOB.length > 255) {
@@ -478,7 +478,7 @@ app.post('/animals/update', authenticateToken, (req, res) => {
         return res.status(400).send('Not a valid colour')
     }
     if (typeof(litterID) !== 'number') {
-        if(litterID !== null || !(litterID)) {
+        if (litterID !== null) {
             return res.status(400).send('Not a valid litter ID')
         }
     }
@@ -486,12 +486,12 @@ app.post('/animals/update', authenticateToken, (req, res) => {
         return res.status(400).send('Not a valid photo file name')
     }
     if (typeof(fostererID) !== 'number') {
-        if (fostererID !== null || !(fostererID)) {
+        if (fostererID !== null) {
             return res.status(400).send('Not a valid fosterer ID')
         }
     }
     if (typeof(surrenderedByID) !== 'number') {
-        if (surrenderedByID !== null || !(surrenderedByID)) {
+        if(surrenderedByID !== null ){    
             return res.status(400).send('Not a valid surrenderer ID')
         }
     }   
@@ -510,16 +510,18 @@ app.post('/animals/update', authenticateToken, (req, res) => {
     if (typeof(deceased) !== 'boolean') {
         return res.status(400).send('Not a valid deceased value')
     }
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(deceasedDate)) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(deceasedDate) && deceasedDate !== "") {
         return res.status(400).send('Not a valid deceased date')
+    }
+    if (deceasedDate === "") {
+        deceasedDate = null
     }
     if (typeof(deceasedReason) !== 'string' || deceasedReason.length > 255) {
         return res.status(400).send('Not a valid deceased reason')
     }
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(incomingDate)) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(incomingDate) && incomingDate !== "") {
         return res.status(400).send('Not a valid incoming date')
     }
-
     // Update the item in the database
     connection.query('UPDATE animals SET animalName = ?, animalDOB = ?, animalMicrochipNum = ?, species = ?, breed = ?, gender = ?, colour = ?, litterID = ?, photoFileName = ?, fostererID = ?, surrenderedByID = ?, desexed = ?, awaitingDesex = ?, awaitingFoster = ?, underVetCare = ?, deceased = ?, deceasedDate = ?, deceasedReason = ?, incomingDate = ? WHERE animalID = ?;', [animalName, animalDOB, animalMicrochipNum, species, breed, gender, colour, litterID, photoFileName, fostererID, surrenderedByID, desexed, awaitingDesex, awaitingFoster, underVetCare, deceased, deceasedDate, deceasedReason, incomingDate, animalID], (err, results) => {
         if (err) {
@@ -527,7 +529,7 @@ app.post('/animals/update', authenticateToken, (req, res) => {
         }
         else {
             return res.json({
-                animalID: animalID
+                updated: true
             })
         }
     })
@@ -561,7 +563,7 @@ app.get('/fosterers', authenticateToken, (req, res) => {
             return res.status(400).send(err)
         }
         else {
-            return res.json({ results })
+            return res.json( results )
         }
     })  
 }  
@@ -594,7 +596,7 @@ app.post('/fosterers/fosterer', authenticateToken, (req, res) => {
             return res.status(400).send(err)
         }
         else {
-            return res.json({ results })
+            return res.json( results )
         }}) 
 }
 )
@@ -658,8 +660,7 @@ app.post('/fosterers/add', authenticateToken, (req, res) => {
         }
         else {
             return res.json({ 
-                fosterer: fostererFirstName,
-                fostererID: results[0].fostererID
+                created: true
             })
         }
     })
@@ -750,7 +751,7 @@ app.post('/fosterers/update', authenticateToken, (req, res) => {
         }
         else {
             return res.json({ 
-                fosterer: fostererFirstName
+                updated: true
             })
         }    
     })
@@ -783,7 +784,7 @@ app.get('/litters', authenticateToken, (req, res) => {
             return res.status(400).send(err)
         }
         else { 
-            return res.json({ results })
+            return res.json( results )
         }
     })
 })
@@ -813,7 +814,7 @@ app.post('/litters/litter', authenticateToken, (req, res) => {
             return res.status(400).send(err)
         }
         else {
-            return res.json({ results })
+            return res.json( results )
         }
     })
 });
@@ -834,7 +835,7 @@ app.post('/litters/add', authenticateToken, (req, res) => {
         }
         else {
             return res.json({
-                litterID: results[0].litterID
+                created: true
             })
         }
     })
@@ -882,7 +883,9 @@ app.post('/litters/update', authenticateToken, (req, res) => {
             return res.status(400).send(err)
         }
         else {
-            return res.json({ updated: true })
+            return res.json({ 
+                updated: true 
+            })
         }
     })
 });
@@ -915,7 +918,7 @@ app.get('/volunteers', authenticateToken, (req, res) => {
             return res.status(400).send(err)
         }
         else { 
-            return res.json({ results })
+            return res.json( results )
         }
     })
 })
@@ -943,7 +946,7 @@ app.post('/volunteers/volunteer', authenticateToken, (req, res) => {
             return res.status(400).send(err)
         }
         else {
-            return res.json({ results })
+            return res.json( results )
         }
     })
 });
@@ -1020,7 +1023,7 @@ app.post('/volunteers/add', authenticateToken, (req, res) => {
         }
         else {
             return res.json({
-                volunteerID: results[0].volunteerID
+                created: true
             })
         }
     }
@@ -1105,7 +1108,7 @@ app.post('/volunteers/update', authenticateToken, (req, res) => {
         }
         else {
             return res.json({
-                volunteerID: results[0].volunteerID
+                updated: true
             })
         }
     }
