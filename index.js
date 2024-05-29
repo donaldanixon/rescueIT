@@ -588,7 +588,7 @@ app.post('/fosterers/fosterer', authenticateToken, (req, res) => {
 
 app.post('/fosterers/add', authenticateToken, (req, res) => {
     console.log('Adding fosterer...')
-    let { fostererFirstName, fostererLastName, fostererAddress, fostererTown, fostererPhone, fostererMobile, fostererEmail, advancedNursing, zoonoticDisease, bottleFeeders } = req.body
+    let { fostererFirstName, fostererLastName, fostererAddress, fostererTown, fostererPhone, fostererSecondaryPhone, fostererEmail, fostererDOB, fostererGender, advancedNursing, zoonoticDisease, bottleFeeders } = req.body
     if (!fostererFirstName) {
         return res.status(400).send("Fosterer first name cannot be empty")
     }
@@ -597,11 +597,49 @@ app.post('/fosterers/add', authenticateToken, (req, res) => {
     }
 
     // Validate query
-    if (invalidQuery(fostererFirstName) || invalidQuery(fostererLastName) || invalidQuery(fostererAddress) || invalidQuery(fostererTown) || invalidQuery(fostererPhone) || invalidQuery(fostererMobile) || invalidQuery(fostererEmail) || invalidQuery(advancedNursing) || invalidQuery(zoonoticDisease) || invalidQuery(bottleFeeders)) {
+    if (invalidQuery(fostererFirstName) || invalidQuery(fostererLastName) || invalidQuery(fostererAddress) || invalidQuery(fostererTown) || invalidQuery(fostererPhone) || invalidQuery(fostererSecondaryPhone) || invalidQuery(fostererEmail) || invalidQuery(fostererDOB) || invalidQuery(fostererGender) || invalidQuery(advancedNursing) || invalidQuery(zoonoticDisease) || invalidQuery(bottleFeeders)) {
         return res.status(400).send('Invalid query')
     }   
 
-    connection.query('INSERT INTO fosterers (fostererFirstName, fostererLastName, fostererAddress, fostererTown, fostererPhone, fostererMobile, fostererEmail, advancedNursing, zoonoticDisease, bottleFeeders) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [fostererAddress, fostererTown, fostererPhone, fostererMobile, fostererEmail, advancedNursing, zoonoticDisease, bottleFeeders], (err, results) => {
+    // Validate typings
+    if (typeof(fostererFirstName) !== 'string' || fostererFirstName.length > 255) {
+        return res.status(400).send('Not a valid fosterer first name')
+    }
+    if (typeof(fostererLastName) !== 'string' || fostererLastName.length > 255) {
+        return res.status(400).send('Not a valid fosterer last name')
+    }
+    if (typeof(fostererAddress) !== 'string' || fostererAddress.length > 255) {
+        return res.status(400).send('Not a valid fosterer address')
+    }
+    if (typeof(fostererTown) !== 'string' || fostererTown.length > 255) {    
+        return res.status(400).send('Not a valid fosterer town')
+    }
+    if (typeof(fostererPhone) !== 'string' || fostererPhone.length > 255) {
+        return res.status(400).send('Not a valid fosterer phone')
+    }
+    if (typeof(fostererSecondaryPhone) !== 'string' || fostererSecondaryPhone.length > 255) {
+        return res.status(400).send('Not a valid fosterer mobile')
+    }
+    if (typeof(fostererEmail) !== 'string' || fostererEmail.length > 255) {
+        return res.status(400).send('Not a valid fosterer email')
+    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(fostererDOB)) {
+        return res.status(400).send('Not a valid date of birth')
+    }
+    if (typeof(fostererGender) !== 'string' || fostererGender.length > 255) {
+        return res.status(400).send('Not a valid fosterer gender')
+    }
+    if (typeof(advancedNursing) !== 'boolean') {
+        return res.status(400).send('Not a valid advanced nursing value')
+    }
+    if (typeof(zoonoticDisease) !== 'boolean') {
+        return res.status(400).send('Not a valid zoonotic disease value')
+    }
+    if (typeof(bottleFeeders) !== 'boolean') {
+        return res.status(400).send('Not a valid bottle feeders value')
+    }
+
+    connection.query('INSERT INTO fosterers (fostererFirstName, fostererLastName, fostererAddress, fostererTown, fostererPhone, fostererSecondaryPhone, fostererEmail, fostererDOB, fostererGender,advancedNursing, zoonoticDisease, bottleFeeders) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?)', [fostererAddress, fostererTown, fostererPhone, fostererSecondaryPhone, fostererEmail, fostererDOB, fostererGender, advancedNursing, zoonoticDisease, bottleFeeders], (err, results) => {
         if (err) {
             return res.status(400).send(err)
         }
@@ -616,14 +654,14 @@ app.post('/fosterers/add', authenticateToken, (req, res) => {
 
 app.post('/fosterers/update', authenticateToken, (req, res) => {
     console.log('Updating fosterer...')
-    let { fostererID, fostererFirstName, fostererLastName, fostererAddress, fostererTown, fostererPhone, fostererMobile, fostererEmail, advancedNursing, zoonoticDisease, bottleFeeders } = req.body
+    let { fostererID, fostererFirstName, fostererLastName, fostererAddress, fostererTown, fostererPhone, fostererSecondaryPhone, fostererEmail, fostererDOB, fostererGender, advancedNursing, zoonoticDisease, bottleFeeders } = req.body
 
     if (!fostererID) {
         return res.status(400).send("Fosterer ID cannot be empty")
     }
 
     // Validate query
-    if (invalidQuery(fostererID) || invalidQuery(fostererFirstName) || invalidQuery(fostererLastName) || invalidQuery(fostererAddress) || invalidQuery(fostererTown) || invalidQuery(fostererPhone) || invalidQuery(fostererMobile) || invalidQuery(fostererEmail) || invalidQuery(advancedNursing) || invalidQuery(zoonoticDisease) || invalidQuery(bottleFeeders)) {
+    if (invalidQuery(fostererID) || invalidQuery(fostererFirstName) || invalidQuery(fostererLastName) || invalidQuery(fostererAddress) || invalidQuery(fostererTown) || invalidQuery(fostererPhone) || invalidQuery(fostererSecondaryPhone) || invalidQuery(fostererEmail) || invalidQuery(fostererDOB) || invalidQuery(fostererGender) || invalidQuery(advancedNursing) || invalidQuery(zoonoticDisease) || invalidQuery(bottleFeeders)) {
         return res.status(400).send('Invalid query')
     }
 
@@ -643,8 +681,10 @@ app.post('/fosterers/update', authenticateToken, (req, res) => {
                 fostererAddress = fostererAddress || results[0].fostererAddress
                 fostererTown = fostererTown || results[0].fostererTown
                 fostererPhone = fostererPhone || results[0].fostererPhone
-                fostererMobile = fostererMobile || results[0].fostererMobile
+                fostererSecondaryPhone = fostererSecondaryPhone || results[0].fostererSecondaryPhone
                 fostererEmail = fostererEmail || results[0].fostererEmail
+                fostererDOB = fostererDOB || results[0].fostererDOB
+                fostererGender  = fostererGender || results[0].fostererGender
                 advancedNursing = advancedNursing || results[0].advancedNursing
                 zoonoticDisease = zoonoticDisease || results[0].zoonoticDisease
                 bottleFeeders = bottleFeeders || results[0].bottleFeeders
@@ -668,11 +708,17 @@ app.post('/fosterers/update', authenticateToken, (req, res) => {
     if (typeof(fostererPhone) !== 'string' || fostererPhone.length > 255) {
         return res.status(400).send('Not a valid fosterer phone')
     }
-    if (typeof(fostererMobile) !== 'string' || fostererMobile.length > 255) {
+    if (typeof(fostererSecondaryPhone) !== 'string' || fostererSecondaryPhone.length > 255) {
         return res.status(400).send('Not a valid fosterer mobile')
     }
     if (typeof(fostererEmail) !== 'string' || fostererEmail.length > 255) {
         return res.status(400).send('Not a valid fosterer email')
+    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(fostererDOB)) {
+        return res.status(400).send('Not a valid date of birth')
+    }
+    if (typeof(fostererGender) !== 'string' || fostererGender.length > 255) {
+        return res.status(400).send('Not a valid fosterer gender')
     }
     if (typeof(advancedNursing) !== 'boolean') {
         return res.status(400).send('Not a valid advanced nursing value')
@@ -685,7 +731,7 @@ app.post('/fosterers/update', authenticateToken, (req, res) => {
     }
 
     // Update the item in the database
-    connection.query('UPDATE fosterers (fostererFirstName, fostererLastName, fostererAddress, fostererTown, fostererPhone, fostererMobile, fostererEmail, advancedNursing, zoonoticDisease, bottleFeeders) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) WHERE fostererID = ?', [fostererAddress, fostererTown, fostererPhone, fostererMobile, fostererEmail, advancedNursing, zoonoticDisease, bottleFeeders, fostererID], (err, results) => {
+    connection.query('UPDATE fosterers (fostererFirstName, fostererLastName, fostererAddress, fostererTown, fostererPhone, fostererSecondaryPhone, fostererEmail, fostererDOB, fostererGender, advancedNursing, zoonoticDisease, bottleFeeders) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) WHERE fostererID = ?', [fostererFirstName, fostererLastName, fostererAddress, fostererTown, fostererPhone, fostererSecondaryPhone, fostererEmail, fostererDOB, fostererGender, advancedNursing, zoonoticDisease, bottleFeeders, fostererID], (err, results) => {
         if (err) {
             return res.status(400).send(err)
         }
