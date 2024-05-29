@@ -8,18 +8,21 @@ const jwtSecret = process.env.RESCUEITJWTsecret;
 const rescueITDBpassword = process.env.RESCUEITDBpassword;
 
 // SQL Connection
-const connection = mysql.createConnection({
+const pool = mysql.createPool({
     host: 'db-rescueit.cho2c4gw4he8.us-east-1.rds.amazonaws.com',
     user: 'admin',
     password: rescueITDBpassword,
     database: 'RESCUEITDB',
-    port: '3306'
+    port: '3306',
+    waitForConnections: true,
+    connectionLimit: 3,
+    queueLimit: 0
 })
-connection.connect(err => {
-    if (err) {
-        console.log(err);
-        return err;
-    }
+
+// Middleware to attach the pool to the request object
+app.use((req, res, next) => {
+    req.pool = pool;
+    next();
 });
 
 // Setup Express App
@@ -85,7 +88,7 @@ app.post('/users/login', (req, res) => {
         return res.status(400).send('Invalid query')
     }
     console.log('Logging in ' + username)
-    connection.query('SELECT * FROM users WHERE username = ?;', [username], (err, results) => {
+    req.pool.query('SELECT * FROM users WHERE username = ?;', [username], (err, results) => {
         if (err) {
             return res.status(400).send(err)
         }
@@ -142,7 +145,7 @@ app.get('/users/register', authenticateToken, (req, res) => {
         }
 
         // Validate username to check for uniqueness
-        connection.query('SELECT * FROM users WHERE username = ?;', [username], (err, results) => {
+        req.pool.query('SELECT * FROM users WHERE username = ?;', [username], (err, results) => {
             if (err) {
                 return res.status(400).send(err)
             }
@@ -156,7 +159,7 @@ app.get('/users/register', authenticateToken, (req, res) => {
             if (err) {
                 return res.status(400).send(err)
             }
-            connection.query('INSERT INTO users (username, userpswd, userrole) VALUES (?, ?, ?);', [username, hash, userrole], (err, results) => {
+            req.pool.query('INSERT INTO users (username, userpswd, userrole) VALUES (?, ?, ?);', [username, hash, userrole], (err, results) => {
                 if (err) {
                     return res.status(400).send(err)
                 }
@@ -172,7 +175,7 @@ app.get('/users/register', authenticateToken, (req, res) => {
 // - List users
 app.get('/users', authenticateToken, (req, res) => {
     console.log('Fetching users...')
-    connection.query('SELECT * FROM users;', (err, results) => {
+    req.pool.query('SELECT * FROM users;', (err, results) => {
         if(err){
             return res.status(400).send(err)
         }
@@ -202,7 +205,7 @@ app.get('/users/updatepassword', authenticateToken, (req, res) => {
         return res.status(400).send('Invalid query')
     }
 
-    connection.query('SELECT * FROM users WHERE username = ?;', [username], (err, results) => {
+    req.pool.query('SELECT * FROM users WHERE username = ?;', [username], (err, results) => {
         if (err) {
             return res.status(401).send(err)
         }
@@ -219,7 +222,7 @@ app.get('/users/updatepassword', authenticateToken, (req, res) => {
                             if (err) {
                                 return res.status(400).send(err)
                             }
-                            connection.query('UPDATE users SET userpswd = ? WHERE username = ?', [hash, username], (err, res) => {
+                            req.pool.query('UPDATE users SET userpswd = ? WHERE username = ?', [hash, username], (err, res) => {
                                 if (err) {
                                     return res.status(400).send(err)
                                 }
@@ -245,7 +248,7 @@ app.get('/users/updatepassword', authenticateToken, (req, res) => {
 // - List all animals
 app.get('/animals', authenticateToken, (req, res) => {
     console.log('Fetching animals...')
-    connection.query('SELECT * FROM animals ORDER BY animalID DESC;', (err, results) => {       
+    req.pool.query('SELECT * FROM animals ORDER BY animalID DESC;', (err, results) => {       
         if(err){
             return res.status(400).send(err)
         }
@@ -340,7 +343,7 @@ app.post('/animals/add', authenticateToken, (req, res) => {
     }
 
     // Insert into database
-    connection.query('INSERT INTO animals (animalName, animalDOB, animalMicrochipNum, species, breed, gender, colour, litterID, photoFileName, fostererID, surrenderedByID, desexed, awaitingDesex, awaitingFoster, underVetCare, deceased, deceasedDate, deceasedReason, incomingDate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);', [animalName, animalDOB, animalMicrochipNum, species, breed, gender, colour, litterID, photoFileName, fostererID, surrenderedByID, desexed, awaitingDesex, awaitingFoster, underVetCare, deceased, deceasedDate, deceasedReason, incomingDate], (err, results) => {
+    req.pool.query('INSERT INTO animals (animalName, animalDOB, animalMicrochipNum, species, breed, gender, colour, litterID, photoFileName, fostererID, surrenderedByID, desexed, awaitingDesex, awaitingFoster, underVetCare, deceased, deceasedDate, deceasedReason, incomingDate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);', [animalName, animalDOB, animalMicrochipNum, species, breed, gender, colour, litterID, photoFileName, fostererID, surrenderedByID, desexed, awaitingDesex, awaitingFoster, underVetCare, deceased, deceasedDate, deceasedReason, incomingDate], (err, results) => {
         if (err) {
             return res.status(400).send(err)
         }
@@ -397,7 +400,7 @@ app.post('/animals/animal', authenticateToken, (req, res) => {
         }
     }
     console.log(searchQuery)
-    connection.query(searchQuery, (err, results) => {       
+    req.pool.query(searchQuery, (err, results) => {       
         if(err){
             return res.status(400).send(err)
         }
@@ -421,7 +424,7 @@ app.post('/animals/update', authenticateToken, (req, res) => {
     }
 
     // Fetch existing values
-    connection.query('SELECT * FROM animals WHERE animalID = ?;', [animalID], (err, results) => {
+    req.pool.query('SELECT * FROM animals WHERE animalID = ?;', [animalID], (err, results) => {
         if (err) {
             return res.status(400).send(err)
         }
@@ -523,7 +526,7 @@ app.post('/animals/update', authenticateToken, (req, res) => {
         return res.status(400).send('Not a valid incoming date')
     }
     // Update the item in the database
-    connection.query('UPDATE animals SET animalName = ?, animalDOB = ?, animalMicrochipNum = ?, species = ?, breed = ?, gender = ?, colour = ?, litterID = ?, photoFileName = ?, fostererID = ?, surrenderedByID = ?, desexed = ?, awaitingDesex = ?, awaitingFoster = ?, underVetCare = ?, deceased = ?, deceasedDate = ?, deceasedReason = ?, incomingDate = ? WHERE animalID = ?;', [animalName, animalDOB, animalMicrochipNum, species, breed, gender, colour, litterID, photoFileName, fostererID, surrenderedByID, desexed, awaitingDesex, awaitingFoster, underVetCare, deceased, deceasedDate, deceasedReason, incomingDate, animalID], (err, results) => {
+    req.pool.query('UPDATE animals SET animalName = ?, animalDOB = ?, animalMicrochipNum = ?, species = ?, breed = ?, gender = ?, colour = ?, litterID = ?, photoFileName = ?, fostererID = ?, surrenderedByID = ?, desexed = ?, awaitingDesex = ?, awaitingFoster = ?, underVetCare = ?, deceased = ?, deceasedDate = ?, deceasedReason = ?, incomingDate = ? WHERE animalID = ?;', [animalName, animalDOB, animalMicrochipNum, species, breed, gender, colour, litterID, photoFileName, fostererID, surrenderedByID, desexed, awaitingDesex, awaitingFoster, underVetCare, deceased, deceasedDate, deceasedReason, incomingDate, animalID], (err, results) => {
         if (err) {
             return res.status(400).send(err)
         }
@@ -544,7 +547,7 @@ app.post('/animals/delete', authenticateToken, (req, res) => {
         return res.status(400).send("Animal ID cannot be empty")
     }
 
-    connection.query('DELETE FROM animals WHERE animalID = ?;', [animalID], (err, results) => {
+    req.pool.query('DELETE FROM animals WHERE animalID = ?;', [animalID], (err, results) => {
         if (err) {
             return res.status(400).send(err)
         }
@@ -558,7 +561,7 @@ app.post('/animals/delete', authenticateToken, (req, res) => {
 
 app.get('/fosterers', authenticateToken, (req, res) => {
     console.log('Fetching fosterers...')
-    connection.query('SELECT * FROM fosterers ORDER BY fostererID DESC;', (err, results) => {
+    req.pool.query('SELECT * FROM fosterers ORDER BY fostererID DESC;', (err, results) => {
         if(err){
             return res.status(400).send(err)
         }
@@ -591,7 +594,7 @@ app.post('/fosterers/fosterer', authenticateToken, (req, res) => {
     }
     
     console.log(searchQuery)
-    connection.query(searchQuery, (err, results) => {       
+    req.pool.query(searchQuery, (err, results) => {       
         if(err){
             return res.status(400).send(err)
         }
@@ -654,7 +657,7 @@ app.post('/fosterers/add', authenticateToken, (req, res) => {
         return res.status(400).send('Not a valid bottle feeders value')
     }
 
-    connection.query('INSERT INTO fosterers (fostererFirstName, fostererLastName, fostererAddress, fostererTown, fostererPhone, fostererSecondaryPhone, fostererEmail, fostererDOB, fostererGender,advancedNursing, zoonoticDisease, bottleFeeders) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?);', [fostererAddress, fostererTown, fostererPhone, fostererSecondaryPhone, fostererEmail, fostererDOB, fostererGender, advancedNursing, zoonoticDisease, bottleFeeders], (err, results) => {
+    req.pool.query('INSERT INTO fosterers (fostererFirstName, fostererLastName, fostererAddress, fostererTown, fostererPhone, fostererSecondaryPhone, fostererEmail, fostererDOB, fostererGender,advancedNursing, zoonoticDisease, bottleFeeders) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?);', [fostererAddress, fostererTown, fostererPhone, fostererSecondaryPhone, fostererEmail, fostererDOB, fostererGender, advancedNursing, zoonoticDisease, bottleFeeders], (err, results) => {
         if (err) {
             return res.status(400).send(err)
         }
@@ -680,7 +683,7 @@ app.post('/fosterers/update', authenticateToken, (req, res) => {
     }
 
     // Fetch existing values
-    connection.query('SELECT * FROM fosterers WHERE fostererID = ?;', [fostererID], (err, results) => {
+    req.pool.query('SELECT * FROM fosterers WHERE fostererID = ?;', [fostererID], (err, results) => {
         if (err) {
             return res.status(400).send(err)
         }
@@ -745,7 +748,7 @@ app.post('/fosterers/update', authenticateToken, (req, res) => {
     }
 
     // Update the item in the database
-    connection.query('UPDATE fosterers (fostererFirstName, fostererLastName, fostererAddress, fostererTown, fostererPhone, fostererSecondaryPhone, fostererEmail, fostererDOB, fostererGender, advancedNursing, zoonoticDisease, bottleFeeders) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) WHERE fostererID = ?;', [fostererFirstName, fostererLastName, fostererAddress, fostererTown, fostererPhone, fostererSecondaryPhone, fostererEmail, fostererDOB, fostererGender, advancedNursing, zoonoticDisease, bottleFeeders, fostererID], (err, results) => {
+    req.pool.query('UPDATE fosterers (fostererFirstName, fostererLastName, fostererAddress, fostererTown, fostererPhone, fostererSecondaryPhone, fostererEmail, fostererDOB, fostererGender, advancedNursing, zoonoticDisease, bottleFeeders) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) WHERE fostererID = ?;', [fostererFirstName, fostererLastName, fostererAddress, fostererTown, fostererPhone, fostererSecondaryPhone, fostererEmail, fostererDOB, fostererGender, advancedNursing, zoonoticDisease, bottleFeeders, fostererID], (err, results) => {
         if (err) {
             return res.status(400).send(err)
         }
@@ -765,7 +768,7 @@ app.post('/fosterers/delete', authenticateToken, (req, res) => {
     if (!fostererID) {
         return res.status(400).send("Fosterer ID cannot be empty")
     }
-    connection.query('DELETE FROM fosterers WHERE fostererID = ?;', [fostererID], (err, results) => {
+    req.pool.query('DELETE FROM fosterers WHERE fostererID = ?;', [fostererID], (err, results) => {
         if (err) {
             return res.status(400).send(err)
         }
@@ -779,7 +782,7 @@ app.post('/fosterers/delete', authenticateToken, (req, res) => {
 
 app.get('/litters', authenticateToken, (req, res) => {
     console.log('Fetching litters...')
-    connection.query('SELECT * FROM litters ORDER BY litterID DESC;', (err, results) => {
+    req.pool.query('SELECT * FROM litters ORDER BY litterID DESC;', (err, results) => {
         if (err) {
             return res.status(400).send(err)
         }
@@ -809,7 +812,7 @@ app.post('/litters/litter', authenticateToken, (req, res) => {
     }
 
     console.log(searchQuery)
-    connection.query(searchQuery, (err, results) => {       
+    req.pool.query(searchQuery, (err, results) => {       
         if(err){
             return res.status(400).send(err)
         }
@@ -829,7 +832,7 @@ app.post('/litters/add', authenticateToken, (req, res) => {
     if (invalidQuery(litterName) || invalidQuery(motherID)) {
         return res.status(400).send('Invalid query')
     }
-    connection.query('INSERT INTO litters (litterName, motherID, litterNotes) VALUES (?, ?, ?);', [litterName, motherID, litterNotes], (err, results) => {
+    req.pool.query('INSERT INTO litters (litterName, motherID, litterNotes) VALUES (?, ?, ?);', [litterName, motherID, litterNotes], (err, results) => {
         if (err) {
             return res.status(400).send(err)
         }
@@ -853,7 +856,7 @@ app.post('/litters/update', authenticateToken, (req, res) => {
     }
 
     // Fetch existing values
-    connection.query('SELECT * FROM litters WHERE litterID = ?;', [litterID], (err, results) => {
+    req.pool.query('SELECT * FROM litters WHERE litterID = ?;', [litterID], (err, results) => {
         if (err) {
             return res.status(400).send("Litter ID cannot be found")
         }
@@ -878,7 +881,7 @@ app.post('/litters/update', authenticateToken, (req, res) => {
     }
 
     // Update the item in the database
-    connection.query('UPDATE litters SET litterName = ?, motherID = ?, litterNotes = ? WHERE litterID = ?;', [litterName, motherID, litterNotes, litterID], (err, results) => {
+    req.pool.query('UPDATE litters SET litterName = ?, motherID = ?, litterNotes = ? WHERE litterID = ?;', [litterName, motherID, litterNotes, litterID], (err, results) => {
         if (err) {
             return res.status(400).send(err)
         }
@@ -899,7 +902,7 @@ app.post('/litters/delete', authenticateToken, (req, res) => {
     if (typeof(litterID) !== 'integer') {
         return res.status(400).send('Not a valid litter ID')
     }
-    connection.query('DELETE FROM litters WHERE litterID = ?;', [litterID], (err, results) => {
+    req.pool.query('DELETE FROM litters WHERE litterID = ?;', [litterID], (err, results) => {
         if (err) {
             return res.status(400).send(err)
         }
@@ -913,7 +916,7 @@ app.post('/litters/delete', authenticateToken, (req, res) => {
 
 app.get('/volunteers', authenticateToken, (req, res) => {
     console.log('Fetching volunteers...')
-    connection.query('SELECT * FROM volunteers ORDER BY volunteerID DESC;', (err, results) => {
+    req.pool.query('SELECT * FROM volunteers ORDER BY volunteerID DESC;', (err, results) => {
         if (err) {
             return res.status(400).send(err)
         }
@@ -941,7 +944,7 @@ app.post('/volunteers/volunteer', authenticateToken, (req, res) => {
         searchQuery = 'SELECT * FROM volunteers WHERE volunteerName LIKE \`%' + searchTerm + '%\` ORDER BY volunteerID DESC;'
     }
 
-    connection.query(searchQuery, (err, results) => {
+    req.pool.query(searchQuery, (err, results) => {
         if (err) {
             return res.status(400).send(err)
         }
@@ -1003,7 +1006,7 @@ app.post('/volunteers/add', authenticateToken, (req, res) => {
     }
 
     // Update database
-    connection.query('INSERT INTO volunteers SET ?', {
+    req.pool.query('INSERT INTO volunteers SET ?', {
         volunteerFirstName: volunteerFirstName,
         volunteerLastName: volunteerLastName,
         volunteerAddress: volunteerAddress,
@@ -1085,7 +1088,7 @@ app.post('/volunteers/update', authenticateToken, (req, res) => {
     }
 
     // Update database
-    connection.query('UPDATE volunteers SET ? WHERE volunteerID = ?;', [
+    req.pool.query('UPDATE volunteers SET ? WHERE volunteerID = ?;', [
         {
             volunteerFirstName: volunteerFirstName,
             volunteerLastName: volunteerLastName,
@@ -1128,7 +1131,7 @@ app.post('/volunteers/delete', authenticateToken, (req, res) => {
     }
 
     // Delete from database
-    connection.query('DELETE FROM volunteers WHERE volunteerID = ?;', [volunteerID], (err, results) => {
+    req.pool.query('DELETE FROM volunteers WHERE volunteerID = ?;', [volunteerID], (err, results) => {
         if (err) {  
             return res.status(400).send(err)
         }
