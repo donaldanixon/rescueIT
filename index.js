@@ -903,3 +903,221 @@ app.get('/volunteers', authenticateToken, (req, res) => {
         }
     })
 })
+
+app.post('/volunteers/volunteer', authenticateToken, (req, res) => {
+    console.log('Adding volunteer...');
+    let { searchTerm } = req.body;    
+    if (!searchTerm) {
+        return res.status(400).send("Search term cannot be empty")
+    }
+    
+    if (invalidQuery(searchTerm)) {
+        return res.status(400).send('Invalid query')
+    }
+
+    if(parseInt(searchTerm)){
+        searchQuery = 'SELECT * FROM volunteers WHERE volunteerID = ' + searchTerm + ' ORDER BY volunteerID DESC;'
+    }
+    else {
+        searchQuery = 'SELECT * FROM volunteers WHERE volunteerName LIKE \`%' + searchTerm + '%\` ORDER BY volunteerID DESC;'
+    }
+
+    connection.query(searchQuery, (err, results) => {
+        if (err) {
+            return res.status(400).send(err)
+        }
+        else {
+            return res.json({ results })
+        }
+    })
+});
+
+app.post('/volunteers/add', authenticateToken, (req, res) => {
+    console.log('Adding volunteer...')
+    let { volunteerFirstName, volunteerLastName, volunteerAddress, volunteerTown, volunteerPhone, volunteerSecondaryPhone, volunteerEmail, volunteerDOB, volunteerGender, volunteerCheckbox1, volunteerCheckbox2, volunteerCheckbox3, volunteerCheckbox4 } = req.body;
+    if(!volunteerFirstName || !volunteerLastName || !volunteerPhone || !volunteerDOB) {
+        return res.status(400).send("Missing required fields")
+    }
+    if (invalidQuery(volunteerFirstName) || invalidQuery(volunteerLastName) || invalidQuery(volunteerAddress) || invalidQuery(volunteerTown) || invalidQuery(volunteerPhone) || invalidQuery(volunteerSecondaryPhone) || invalidQuery(volunteerEmail) || invalidQuery(volunteerDOB) || invalidQuery(volunteerGender) || invalidQuery(volunteerCheckbox1) || invalidQuery(volunteerCheckbox2) || invalidQuery(volunteerCheckbox3) || invalidQuery(volunteerCheckbox4)) {
+        return res.status(400).send('Invalid query')
+    }
+
+    // Validate typing
+    if (typeof(volunteerFirstName) !== 'string' || volunteerFirstName.length > 255) {
+        return res.status(400).send('Not a valid volunteer first name')
+    }
+    if (typeof(volunteerLastName) !== 'string' || volunteerLastName.length > 255) {
+        return res.status(400).send('Not a valid volunteer last name')
+    }
+    if (typeof(volunteerAddress) !== 'string' || volunteerAddress.length > 255) {
+        return res.status(400).send('Not a valid volunteer address')
+    }
+    if (typeof(volunteerTown) !== 'string' || volunteerTown.length > 255) {
+        return res.status(400).send('Not a valid volunteer town')
+    }
+    if (typeof(volunteerPhone) !== 'string' || volunteerPhone.length > 255) {
+        return res.status(400).send('Not a valid volunteer phone')
+    }
+    if (typeof(volunteerSecondaryPhone) !== 'string' || volunteerSecondaryPhone.length > 255) {
+        return res.status(400).send('Not a valid volunteer secondary phone')
+    }
+    if (typeof(volunteerEmail) !== 'string' || volunteerEmail.length > 255) {
+        return res.status(400).send('Not a valid volunteer email')
+    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(volunteerDOB)) {
+        return res.status(400).send('Not a valid date of birth')
+    }
+    if (typeof(volunteerGender) !== 'string' || volunteerGender.length > 255) {
+        return res.status(400).send('Not a valid volunteer gender')
+    }
+    if (typeof(volunteerCheckbox1) !== 'boolean') {
+        return res.status(400).send('Not a valid volunteer checkbox 1')
+    }
+    if (typeof(volunteerCheckbox2) !== 'boolean') {
+        return res.status(400).send('Not a valid volunteer checkbox 2')
+    }
+    if (typeof(volunteerCheckbox3) !== 'boolean') {
+        return res.status(400).send('Not a valid volunteer checkbox 3')
+    }
+    if (typeof(volunteerCheckbox4) !== 'boolean') {
+        return res.status(400).send('Not a valid volunteer checkbox 4')
+    }
+
+    // Update database
+    connection.query('INSERT INTO volunteers SET ?', {
+        volunteerFirstName: volunteerFirstName,
+        volunteerLastName: volunteerLastName,
+        volunteerAddress: volunteerAddress,
+        volunteerTown: volunteerTown,
+        volunteerPhone: volunteerPhone,
+        volunteerSecondaryPhone: volunteerSecondaryPhone,
+        volunteerEmail: volunteerEmail,
+        volunteerDOB: volunteerDOB,
+        volunteerGender: volunteerGender,
+        volunteerCheckbox1: volunteerCheckbox1,
+        volunteerCheckbox2: volunteerCheckbox2,
+        volunteerCheckbox3: volunteerCheckbox3,
+        volunteerCheckbox4: volunteerCheckbox4
+    }, (err) => {
+        if (err) {
+            return res.status(400).send(err)
+        }
+        else {
+            return res.json({
+                volunteerID: results[0].volunteerID
+            })
+        }
+    }
+    )
+});
+
+app.post('/volunteers/update', authenticateToken, (req, res) => {
+    console.log('Updating volunteer...')
+    let { volunteerID, volunteerFirstName, volunteerLastName, volunteerAddress, volunteerTown, volunteerPhone, volunteerSecondaryPhone, volunteerEmail, volunteerDOB, volunteerGender, volunteerCheckbox1, volunteerCheckbox2, volunteerCheckbox3, volunteerCheckbox4 } = req.body;
+    if(!volunteerID) {
+        return res.status(400).send("Missing required fields")
+    }
+    if (invalidQuery(volunteerID) || invalidQuery(volunteerFirstName) || invalidQuery(volunteerLastName) || invalidQuery(volunteerAddress) || invalidQuery(volunteerTown) || invalidQuery(volunteerPhone) || invalidQuery(volunteerSecondaryPhone) || invalidQuery(volunteerEmail) || invalidQuery(volunteerDOB) || invalidQuery(volunteerGender) || invalidQuery(volunteerCheckbox1) || invalidQuery(volunteerCheckbox2) || invalidQuery(volunteerCheckbox3) || invalidQuery(volunteerCheckbox4)) {
+        return res.status(400).send('Invalid query')
+    }
+
+    // Validate typing
+    if (typeof(volunteerID) !== 'number') {
+        return res.status(400).send('Not a valid volunteer ID')
+    }
+    if (typeof(volunteerFirstName) !== 'string' || volunteerFirstName.length > 255) {
+        return res.status(400).send('Not a valid volunteer first name')
+    }
+    if (typeof(volunteerLastName) !== 'string' || volunteerLastName.length > 255) {
+        return res.status(400).send('Not a valid volunteer last name')
+    }
+    if (typeof(volunteerAddress) !== 'string' || volunteerAddress.length > 255) {
+        return res.status(400).send('Not a valid volunteer address')
+    }
+    if (typeof(volunteerTown) !== 'string' || volunteerTown.length > 255) {
+        return res.status(400).send('Not a valid volunteer town')
+    }
+    if (typeof(volunteerPhone) !== 'string' || volunteerPhone.length > 255) {
+        return res.status(400).send('Not a valid volunteer phone')
+    }
+    if (typeof(volunteerSecondaryPhone) !== 'string' || volunteerSecondaryPhone.length > 255) {
+        return res.status(400).send('Not a valid volunteer secondary phone')
+    }
+    if (typeof(volunteerEmail) !== 'string' || volunteerEmail.length > 255) {
+        return res.status(400).send('Not a valid volunteer email')
+    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(volunteerDOB)) {
+        return res.status(400).send('Not a valid date of birth')
+    }
+    if (typeof(volunteerGender) !== 'string' || volunteerGender.length > 255) {
+        return res.status(400).send('Not a valid volunteer gender')
+    }
+    if (typeof(volunteerCheckbox1) !== 'boolean') {
+        return res.status(400).send('Not a valid volunteer checkbox 1')
+    }
+    if (typeof(volunteerCheckbox2) !== 'boolean') {
+        return res.status(400).send('Not a valid volunteer checkbox 2')
+    }
+    if (typeof(volunteerCheckbox3) !== 'boolean') {
+        return res.status(400).send('Not a valid volunteer checkbox 3')
+    }
+    if (typeof(volunteerCheckbox4) !== 'boolean') {
+        return res.status(400).send('Not a valid volunteer checkbox 4')
+    }
+
+    // Update database
+    connection.query('UPDATE volunteers SET ? WHERE volunteerID = ?;', [
+        {
+            volunteerFirstName: volunteerFirstName,
+            volunteerLastName: volunteerLastName,
+            volunteerAddress: volunteerAddress,
+            volunteerTown: volunteerTown,
+            volunteerPhone: volunteerPhone,
+            volunteerSecondaryPhone: volunteerSecondaryPhone,
+            volunteerEmail: volunteerEmail,
+            volunteerDOB: volunteerDOB,
+            volunteerGender: volunteerGender,
+            volunteerCheckbox1: volunteerCheckbox1,
+            volunteerCheckbox2: volunteerCheckbox2,
+            volunteerCheckbox3: volunteerCheckbox3,
+            volunteerCheckbox4: volunteerCheckbox4
+        },
+        volunteerID
+    ], (err, results) => {
+        if (err) {  
+            return res.status(400).send(err)
+        }
+        else {
+            return res.json({
+                volunteerID: results[0].volunteerID
+            })
+        }
+    }
+    )
+});
+
+app.post('/volunteers/delete', authenticateToken, (req, res) => {
+    console.log('Deleting volunteer...')
+    let { volunteerID } = req.body;
+    if(!volunteerID) {
+        return res.status(400).send("Missing required fields")
+    }   
+
+    // Validate typing
+    if (typeof(volunteerID) !== 'number') {
+        return res.status(400).send('Not a valid volunteer ID')
+    }
+
+    // Delete from database
+    connection.query('DELETE FROM volunteers WHERE volunteerID = ?;', [volunteerID], (err, results) => {
+        if (err) {  
+            return res.status(400).send(err)
+        }
+        else {
+            return res.json({
+                deleted: true
+            })
+        }
+    }
+    )
+});
