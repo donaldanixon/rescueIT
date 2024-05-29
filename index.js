@@ -258,7 +258,10 @@ app.post('/users/fosterer', authenticateToken, (req, res) => {
             return res.status(400).send(err)
         }
         else {
-            return res.json({ fostererID: results[0].fostererID })
+            return res.json({ 
+                fostererID: results[0].fostererID,
+                bottleFeeder: results[0].bottleFeeders
+            })
         }
     })
 }
