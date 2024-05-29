@@ -294,7 +294,7 @@ app.post('/animals/add', authenticateToken, (req, res) => {
         return res.status(400).send('Not a valid colour')
     }
     if (typeof(litterID) !== 'number') {
-        if (litterID !== null || !(litterID)) {
+        if (litterID !== null) {
             return res.status(400).send('Not a valid litter ID')
         }
     }
@@ -302,12 +302,12 @@ app.post('/animals/add', authenticateToken, (req, res) => {
         return res.status(400).send('Not a valid photo file name')
     }
     if (typeof(fostererID) !== 'number') {
-        if (fostererID !== null || !(fostererID)) {
+        if (fostererID !== null) {
             return res.status(400).send('Not a valid fosterer ID')
         }
     }
     if (typeof(surrenderedByID) !== 'number') {
-        if(surrenderedByID !== null || !(surrenderedByID)){    
+        if(surrenderedByID !== null ){    
             return res.status(400).send('Not a valid surrenderer ID')
         }
     }   
