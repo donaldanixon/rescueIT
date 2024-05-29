@@ -246,12 +246,19 @@ app.get('/users/updatepassword', authenticateToken, (req, res) => {
 // - Match fosterer from userID
 app.post('/users/fosterer', authenticateToken, (req, res) => {
     console.log('Fetching fosterer...')
-    req.pool.query('SELECT * FROM fosterers WHERE userID = ?;', [req.user.userId], (err, results) => {
+    let { userID } = req.body;
+    if (!userID) {
+        return res.status(400).send("User ID cannot be empty")
+    }
+    if (typeof userID !== 'number') {
+        return res.status(400).send("Invalid User ID")
+    }
+    req.pool.query('SELECT * FROM fosterers WHERE userID = ?;', [userID], (err, results) => {
         if(err){
             return res.status(400).send(err)
         }
         else {
-            return res.json({ fostererId: results[0].fostererID })
+            return res.json({ fostererID: results[0].fostererID })
         }
     })
 }
