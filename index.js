@@ -243,6 +243,20 @@ app.get('/users/updatepassword', authenticateToken, (req, res) => {
 }
 )
 
+// - Match fosterer from userID
+app.get('/users/fosterer', authenticateToken, (req, res) => {
+    console.log('Fetching fosterer...')
+    req.pool.query('SELECT * FROM fosterers WHERE userID = ?;', [req.user.userId], (err, results) => {
+        if(err){
+            return res.status(400).send(err)
+        }
+        else {
+            return res.json({ fostererId: results[0].fostererID })
+        }
+    })
+}
+)
+
 // - List all animals
 app.get('/animals', authenticateToken, (req, res) => {
     console.log('Fetching animals...')
@@ -407,6 +421,27 @@ app.post('/animals/animal', authenticateToken, (req, res) => {
         }})    
 }
 );
+
+// Find animals belonging to a fosterer
+app.post('/animals/fosterer', authenticateToken, (req, res) => {
+    console.log('Fetching animals belonging to a fosterer...')
+    let { fostererID } = req.body;
+    if (!fostererID) {
+        return res.status(400).send("Fosterer ID cannot be empty")
+    }
+    if (typeof(fostererID) !== 'number') {
+        return res.status(400).send('Not a valid fosterer ID')
+    }
+    
+    req.pool.query('SELECT * FROM animals WHERE fostererID = ? ORDER BY animalID DESC;', [fostererID], (err, results) => {
+        if (err) {
+            return res.status(400).send(err)
+        }
+        else {
+            return res.json( results )
+        }
+    })
+});
 
 app.post('/animals/update', authenticateToken, (req, res) => {
     console.log('Updating animal...')
