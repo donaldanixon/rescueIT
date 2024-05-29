@@ -19,14 +19,12 @@ const pool = mysql.createPool({
     queueLimit: 0
 })
 
-// Middleware to attach the pool to the request object
+// Setup Express App
+const app = express();
 app.use((req, res, next) => {
     req.pool = pool;
     next();
 });
-
-// Setup Express App
-const app = express();
 
 const limiter = rateLimit({
     windowMs:  60 * 1000, // 1 minutes
