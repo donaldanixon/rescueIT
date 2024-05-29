@@ -244,7 +244,7 @@ app.get('/users/updatepassword', authenticateToken, (req, res) => {
 )
 
 // - Match fosterer from userID
-app.get('/users/fosterer', authenticateToken, (req, res) => {
+app.post('/users/fosterer', authenticateToken, (req, res) => {
     console.log('Fetching fosterer...')
     req.pool.query('SELECT * FROM fosterers WHERE userID = ?;', [req.user.userId], (err, results) => {
         if(err){
