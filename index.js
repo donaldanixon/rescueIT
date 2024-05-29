@@ -294,7 +294,7 @@ app.post('/animals/add', authenticateToken, (req, res) => {
         return res.status(400).send('Not a valid colour')
     }
     if (typeof(litterID) !== 'number') {
-        if (litterID !== null) {
+        if (litterID !== null || !(litterID)) {
             return res.status(400).send('Not a valid litter ID')
         }
     }
@@ -302,12 +302,12 @@ app.post('/animals/add', authenticateToken, (req, res) => {
         return res.status(400).send('Not a valid photo file name')
     }
     if (typeof(fostererID) !== 'number') {
-        if (fostererID !== null) {
+        if (fostererID !== null || !(fostererID)) {
             return res.status(400).send('Not a valid fosterer ID')
         }
     }
     if (typeof(surrenderedByID) !== 'number') {
-        if(surrenderedByID !== null){    
+        if(surrenderedByID !== null || !(surrenderedByID)){    
             return res.status(400).send('Not a valid surrenderer ID')
         }
     }   
@@ -474,7 +474,7 @@ app.post('/animals/update', authenticateToken, (req, res) => {
         return res.status(400).send('Not a valid colour')
     }
     if (typeof(litterID) !== 'number') {
-        if(litterID !== null) {
+        if(litterID !== null || !(litterID)) {
             return res.status(400).send('Not a valid litter ID')
         }
     }
@@ -482,12 +482,12 @@ app.post('/animals/update', authenticateToken, (req, res) => {
         return res.status(400).send('Not a valid photo file name')
     }
     if (typeof(fostererID) !== 'number') {
-        if (fostererID !== null) {
+        if (fostererID !== null || !(fostererID)) {
             return res.status(400).send('Not a valid fosterer ID')
         }
     }
     if (typeof(surrenderedByID) !== 'number') {
-        if (surrenderedByID !== null) {
+        if (surrenderedByID !== null || !(surrenderedByID)) {
             return res.status(400).send('Not a valid surrenderer ID')
         }
     }   
