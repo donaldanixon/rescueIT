@@ -293,16 +293,16 @@ app.post('/animals/add', authenticateToken, (req, res) => {
     if (typeof(colour) !== 'string' || colour.length > 255) {  
         return res.status(400).send('Not a valid colour')
     }
-    if (typeof(litterID) !== 'number') {
+    if (typeof(litterID) !== 'number' || !(litterID === null )) {
         return res.status(400).send('Not a valid litter ID')
     }
     if (typeof(photoFileName) !== 'string' || photoFileName.length > 255) {
         return res.status(400).send('Not a valid photo file name')
     }
-    if (typeof(fostererID) !== 'number') {
+    if (typeof(fostererID) !== 'number' || !(fostererID === null )) {
         return res.status(400).send('Not a valid fosterer ID')
     }
-    if (typeof(surrenderedByID) !== 'number') {
+    if (typeof(surrenderedByID) !== 'number' || !(surrenderedByID === null )) {
         return res.status(400).send('Not a valid surrenderer ID')
     }   
     if (typeof(desexed) !== 'boolean') {
@@ -467,16 +467,16 @@ app.post('/animals/update', authenticateToken, (req, res) => {
     if (typeof(colour) !== 'string' || colour.length > 255) {  
         return res.status(400).send('Not a valid colour')
     }
-    if (typeof(litterID) !== 'number') {
+    if (typeof(litterID) !== 'number' || !(litterID === null )) {
         return res.status(400).send('Not a valid litter ID')
     }
     if (typeof(photoFileName) !== 'string' || photoFileName.length > 255) {
         return res.status(400).send('Not a valid photo file name')
     }
-    if (typeof(fostererID) !== 'number') {
+    if (typeof(fostererID) !== 'number' || !(fostererID === null )) {
         return res.status(400).send('Not a valid fosterer ID')
     }
-    if (typeof(surrenderedByID) !== 'number') {
+    if (typeof(surrenderedByID) !== 'number' || !(surrenderedByID === null )) {
         return res.status(400).send('Not a valid surrenderer ID')
     }   
     if (typeof(desexed) !== 'boolean') {
