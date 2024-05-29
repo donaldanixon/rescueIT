@@ -267,7 +267,7 @@ app.post('/animals/add', authenticateToken, (req, res) => {
     }
 
     // Validate query
-    if (invalidQuery(animalID) || invalidQuery(animalName) || invalidQuery(animalDOB) || invalidQuery(animalMicrochipNum) || invalidQuery(species) || invalidQuery(breed) || invalidQuery(gender) || invalidQuery(colour) || invalidQuery(litterID) || invalidQuery(photoFileName) || invalidQuery(fostererID) || invalidQuery(surrenderedByID) || invalidQuery(desexed) || invalidQuery(awaitingDesex) || invalidQuery(awaitingFoster) || invalidQuery(underVetCare)) {
+    if (invalidQuery(animalName) || invalidQuery(animalDOB) || invalidQuery(animalMicrochipNum) || invalidQuery(species) || invalidQuery(breed) || invalidQuery(gender) || invalidQuery(colour) || invalidQuery(litterID) || invalidQuery(photoFileName) || invalidQuery(fostererID) || invalidQuery(surrenderedByID) || invalidQuery(desexed) || invalidQuery(awaitingDesex) || invalidQuery(awaitingFoster) || invalidQuery(underVetCare)) {
         return res.status(400).send('Invalid query')
     }
 
