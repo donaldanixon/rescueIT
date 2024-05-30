@@ -122,7 +122,7 @@ app.post('/users/login', (req, res) => {
 })
 
 // - Register
-app.get('/users/register', authenticateToken, (req, res) => {
+app.post('/users/register', authenticateToken, (req, res) => {
     console.log('Registering user...')
         let { username, password, userrole } = req.body;
         
@@ -185,7 +185,7 @@ app.get('/users', authenticateToken, (req, res) => {
 )
 
 // - Update password
-app.get('/users/updatepassword', authenticateToken, (req, res) => {
+app.patch('/users/updatepassword', authenticateToken, (req, res) => {
     console.log('Updating password...')
     let { username, oldpassword, newpassword } = req.body;
     if (!username) {
@@ -453,7 +453,7 @@ app.post('/animals/fosterer', authenticateToken, (req, res) => {
     })
 });
 
-app.post('/animals/update', authenticateToken, (req, res) => {
+app.patch('/animals/update', authenticateToken, (req, res) => {
     console.log('Updating animal...')
     let { animalID, animalName, animalDOB, animalMicrochipNum, species, breed, gender, colour, litterID, photoFileName, fostererID, surrenderedByID, desexed, awaitingDesex, awaitingFoster, underVetCare, deceased, deceasedDate, deceasedReason, incomingDate } = req.body; 
 
@@ -582,7 +582,7 @@ app.post('/animals/update', authenticateToken, (req, res) => {
 }
 );
 
-app.post('/animals/delete', authenticateToken, (req, res) => {
+app.delete('/animals/delete', authenticateToken, (req, res) => {
     console.log('Deleting animal...')
     let { animalID } = req.body;
 
@@ -712,7 +712,7 @@ app.post('/fosterers/add', authenticateToken, (req, res) => {
     })
 })
 
-app.post('/fosterers/update', authenticateToken, (req, res) => {
+app.patch('/fosterers/update', authenticateToken, (req, res) => {
     console.log('Updating fosterer...')
     let { fostererID, fostererFirstName, fostererLastName, fostererAddress, fostererTown, fostererPhone, fostererSecondaryPhone, fostererEmail, fostererDOB, fostererGender, advancedNursing, zoonoticDisease, bottleFeeders } = req.body
 
@@ -805,7 +805,7 @@ app.post('/fosterers/update', authenticateToken, (req, res) => {
 }
 );
 
-app.post('/fosterers/delete', authenticateToken, (req, res) => {
+app.delete('/fosterers/delete', authenticateToken, (req, res) => {
     console.log('Deleting fosterer...')
     let { fostererID } = req.body
     if (!fostererID) {
@@ -887,7 +887,7 @@ app.post('/litters/add', authenticateToken, (req, res) => {
     })
 })
 
-app.post('/litters/update', authenticateToken, (req, res) => {
+app.patch('/litters/update', authenticateToken, (req, res) => {
     console.log('Updating litter...')  
     let { litterID, litterName, motherID, litterNotes } = req.body
     if (!litterID) {
@@ -936,7 +936,7 @@ app.post('/litters/update', authenticateToken, (req, res) => {
     })
 });
 
-app.post('/litters/delete', authenticateToken, (req, res) => {
+app.delete('/litters/delete', authenticateToken, (req, res) => {
     console.log('Deleting litter...')  
     let { litterID } = req.body
     if (!litterID) {
@@ -1076,7 +1076,7 @@ app.post('/volunteers/add', authenticateToken, (req, res) => {
     )
 });
 
-app.post('/volunteers/update', authenticateToken, (req, res) => {
+app.patch('/volunteers/update', authenticateToken, (req, res) => {
     console.log('Updating volunteer...')
     let { volunteerID, volunteerFirstName, volunteerLastName, volunteerAddress, volunteerTown, volunteerPhone, volunteerSecondaryPhone, volunteerEmail, volunteerDOB, volunteerGender, volunteerCheckbox1, volunteerCheckbox2, volunteerCheckbox3, volunteerCheckbox4 } = req.body;
     if(!volunteerID) {
@@ -1161,7 +1161,7 @@ app.post('/volunteers/update', authenticateToken, (req, res) => {
     )
 });
 
-app.post('/volunteers/delete', authenticateToken, (req, res) => {
+app.delete('/volunteers/delete', authenticateToken, (req, res) => {
     console.log('Deleting volunteer...')
     let { volunteerID } = req.body;
     if(!volunteerID) {
@@ -1185,4 +1185,162 @@ app.post('/volunteers/delete', authenticateToken, (req, res) => {
         }
     }
     )
+});
+
+app.get('/weights/weights', authenticateToken, (req, res) => {
+    console.log('Getting weights...')
+    req.pool.query('SELECT * FROM weights ORDER BY weightID DESC;', (err, results) => {
+        if (err) {  
+            return res.status(400).send(err)
+        }
+        else {
+            return res.json(results)
+        }   
+    })   
+});
+
+app.get('/weights/weight', authenticateToken, (req, res) => {
+    console.log('Getting weight...')
+    let { weightID } = req.query;
+    if(!weightID) {
+        return res.status(400).send("Missing required fields")
+    }
+    if (typeof(weightID) !== 'number') {
+        return res.status(400).send('Not a valid weight ID')
+    }
+
+    req.post.query('SELECT * FROM weights WHERE weightID = ?;', [weightID], (err, results) => {
+        if (err) {  
+            return res.status(400).send(err)
+        }
+        else {
+            return res.json(results)
+        }   
+    })
+});
+
+app.post('/weights/create', authenticateToken, (req, res) => {
+    console.log('Creating weight...')
+    let { animalID, weight, note, readingTakenBy } = req.body;
+    if(!weight || !readingTakenBy || !animalID) {
+        return res.status(400).send("Missing required fields")
+    }
+    if ( invalidQuery(note) || invalidQuery(readingTakenBy) ) {
+        return res.status(400).send('Invalid query')
+    }
+
+    // Validate typing  
+    if(typeof(animalID) !== 'number') {
+        return res.status(400).send('Not a valid animal ID')
+    }    
+    if (typeof(weight) !== 'number') {
+        return res.status(400).send('Not a valid weight value')
+    }
+    if (typeof(note) !== 'string' || note.length > 255) {
+        return res.status(400).send('Not a valid note')
+    }
+    if (typeof(readingTakenBy) !== 'string' || readingTakenBy.length > 255) {
+        return res.status(400).send('Not a valid reading taken by')
+    }
+
+    // Create in database
+    req.pool.query('INSERT INTO weights (weight, note, readingTakenBy) VALUES (?, ?, ?);', [weight, note, readingTakenBy], (err, results) => {
+        if(err) {
+            return res.status(400).send(err)
+        }
+        else {
+            return res.json({
+                created: true
+            })
+        }
+    })
+});
+
+app.patch('/weights/update', authenticateToken, (req, res) => {
+    console.log('Updating weight...')
+    let { weightID, animalID, weight, note, readingTakenBy } = req.body;
+    if(!weightID) {
+        return res.status(400).send("Missing required fields")
+    }
+    if ( invalidQuery(weight) || invalidQuery(note) || invalidQuery(readingTakenBy)) {
+        return res.status(400).send('Invalid query')
+    }
+
+    // Fetch existing weight from database and update variables if not present in the request
+    req.pool.query('SELECT * FROM weights WHERE weightID = ?;', [weightID], (err, results) => {
+        if (err) {  
+            return res.status(400).send(err)
+        }
+        else {
+            if (results.length > 0) {
+                animalID = animalID || results[0].animalID
+                weight = weight || results[0].weight
+                note = note || results[0].note
+                readingTakenBy = readingTakenBy || results[0].readingTakenBy
+            }
+        }
+    })
+
+    // Validate typing
+    if (typeof(weightID) !== 'number') {
+        return res.status(400).send('Not a valid weight ID')
+    }
+    if (typeof(animalID) !== 'number') {
+        return res.status(400).send('Not a valid animal ID')
+    }
+    if (typeof(weight) !== 'number') {
+        return res.status(400).send('Not a valid weight value')
+    }
+    if (typeof(note) !== 'string' || note.length > 255) {
+        return res.status(400).send('Not a valid note')
+    }
+    if (typeof(readingTakenBy) !== 'string' || readingTakenBy.length > 255) {
+        return res.status(400).send('Not a valid reading taken by')
+    }
+
+    // Update database
+    req.pool.query('UPDATE weights SET ? WHERE weightID = ?;', [
+        {
+            animalID: animalID,
+            weight: weight,
+            note: note,
+            readingTakenBy: readingTakenBy
+        },
+        weightID
+    ], (err, results) => {
+        if (err) {  
+            return res.status(400).send(err)
+        }
+        else {
+            return res.json({
+                updated: true
+            })
+        }
+    }
+    );  
+})
+
+app.delete('/weights/delete', authenticateToken, (req, res) => {
+    console.log('Deleting weight...')
+    let { weightID } = req.body;
+    if(!weightID) {
+        return res.status(400).send("Missing required fields")
+    }
+
+    // Validate typing
+    if (typeof(weightID) !== 'number') {
+        return res.status(400).send('Not a valid weight ID')
+    }
+
+    // Delete from database
+    req.pool.query('DELETE FROM weights WHERE weightID = ?;', [weightID], (err, results) => {
+        if (err) {  
+            return res.status(400).send(err)
+        }
+        else {
+            return res.json({
+                deleted: true
+            })
+        }
+    })
 });
