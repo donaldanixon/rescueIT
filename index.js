@@ -1265,7 +1265,7 @@ app.post('/weights/create', authenticateToken, (req, res) => {
     }
 
     // Create in database
-    req.pool.query('INSERT INTO weights (weight, note, readingTakenBy, readingDateTime) VALUES (?, ?, ?, ?);', [weight, note, readingTakenBy, currentDateTime], (err, results) => {
+    req.pool.query('INSERT INTO weights (animalID, weight, note, readingTakenBy, readingDateTime) VALUES (?, ?, ?, ?, ?);', [animalID, weight, note, readingTakenBy, currentDateTime], (err, results) => {
         if(err) {
             return res.status(400).send(err)
         }
