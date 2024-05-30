@@ -1221,15 +1221,15 @@ app.get('/weights/weights', authenticateToken, (req, res) => {
 
 app.get('/weights/weight', authenticateToken, (req, res) => {
     console.log('Getting weight...')
-    let { weightID } = req.query;
-    if(!weightID) {
+    let { animalID } = req.query;
+    if(!animalID) {
         return res.status(400).send("Missing required fields")
     }
-    if (typeof(weightID) !== 'number') {
+    if (typeof(animalID) !== 'number') {
         return res.status(400).send('Not a valid weight ID')
     }
 
-    req.post.query('SELECT * FROM weights WHERE weightID = ?;', [weightID], (err, results) => {
+    req.post.query('SELECT * FROM weights WHERE animalID = ?;', [animalID], (err, results) => {
         if (err) {  
             return res.status(400).send(err)
         }
@@ -1242,8 +1242,7 @@ app.get('/weights/weight', authenticateToken, (req, res) => {
 app.post('/weights/create', authenticateToken, (req, res) => {
     console.log('Creating weight...')
     let { animalID, weight, note, readingTakenBy } = req.body;
-    const currentDateTime = new Date().toISOString();
-
+    const currentDateTime = new Date().toISOString().replace('T', ' ').replace('Z', '');
     if(!weight || !readingTakenBy || !animalID) {
         return res.status(400).send("Missing required fields")
     }
