@@ -432,6 +432,26 @@ app.post('/animals/animal', authenticateToken, (req, res) => {
 }
 );
 
+// - Fetch animal by ID
+app.get('/animals/animalbyid', authenticateToken, (req, res) => {
+    console.log('Fetching animal by ID...')
+    let { animalID } = req.query;
+    if (!animalID) {
+        return res.status(400).send("Animal ID cannot be empty")
+    }
+    if (typeof(animalID) !== 'number') {
+        return res.status(400).send('Not a valid animal ID')
+    }
+    req.pool.query('SELECT * FROM animals WHERE animalID = ? ORDER BY animalID DESC;', [animalID], (err, results) => {
+        if (err) {
+            return res.status(400).send(err)
+        }
+        else {
+            return res.json( results )
+        }
+    })
+});
+
 // Find animals belonging to a fosterer
 app.post('/animals/fosterer', authenticateToken, (req, res) => {
     console.log('Fetching animals belonging to a fosterer...')
