@@ -1222,6 +1222,8 @@ app.get('/weights/weight', authenticateToken, (req, res) => {
 app.post('/weights/create', authenticateToken, (req, res) => {
     console.log('Creating weight...')
     let { animalID, weight, note, readingTakenBy } = req.body;
+    const currentDateTime = new Date().toISOString();
+
     if(!weight || !readingTakenBy || !animalID) {
         return res.status(400).send("Missing required fields")
     }
@@ -1244,7 +1246,7 @@ app.post('/weights/create', authenticateToken, (req, res) => {
     }
 
     // Create in database
-    req.pool.query('INSERT INTO weights (weight, note, readingTakenBy) VALUES (?, ?, ?);', [weight, note, readingTakenBy], (err, results) => {
+    req.pool.query('INSERT INTO weights (weight, note, readingTakenBy, readingDateTime) VALUES (?, ?, ?, ?);', [weight, note, readingTakenBy, currentDateTime], (err, results) => {
         if(err) {
             return res.status(400).send(err)
         }
@@ -1259,6 +1261,8 @@ app.post('/weights/create', authenticateToken, (req, res) => {
 app.patch('/weights/update', authenticateToken, (req, res) => {
     console.log('Updating weight...')
     let { weightID, animalID, weight, note, readingTakenBy } = req.body;
+    const currentDateTime = new Date().toISOString();
+
     if(!weightID) {
         return res.status(400).send("Missing required fields")
     }
@@ -1304,7 +1308,8 @@ app.patch('/weights/update', authenticateToken, (req, res) => {
             animalID: animalID,
             weight: weight,
             note: note,
-            readingTakenBy: readingTakenBy
+            readingTakenBy: readingTakenBy,
+            readingDateTime: currentDateTime
         },
         weightID
     ], (err, results) => {
