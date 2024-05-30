@@ -1229,7 +1229,7 @@ app.get('/weights/weight', authenticateToken, (req, res) => {
         return res.status(400).send('Not a valid animal ID')
     }
 
-    req.post.query('SELECT * FROM weights WHERE animalID = ?;', [animalID], (err, results) => {
+    req.pool.query('SELECT * FROM weights WHERE animalID = ?;', [animalID], (err, results) => {
         if (err) {  
             return res.status(400).send(err)
         }
