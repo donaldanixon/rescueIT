@@ -1225,8 +1225,8 @@ app.get('/weights/weight', authenticateToken, (req, res) => {
     if(!animalID) {
         return res.status(400).send("Missing required fields")
     }
-    if (typeof(animalID) !== 'number') {
-        return res.status(400).send('Not a valid weight ID')
+    if (animalID.match(/^\d+$/) === false) {
+        return res.status(400).send('Not a valid animal ID')
     }
 
     req.post.query('SELECT * FROM weights WHERE animalID = ?;', [animalID], (err, results) => {
