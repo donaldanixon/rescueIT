@@ -103,7 +103,7 @@ app.post('/users/login', (req, res) => {
                 else {
                     if (result === true){
                         console.log('Login successful')
-                        const token = jwt.sign({userId: results[0].userID, role: results[0].userrole, userName: results[0].username}, jwtSecret, {expiresIn: '1h'});
+                        const token = jwt.sign({userId: results[0].userID, role: results[0].userrole, userName: results[0].username}, jwtSecret, {expiresIn: '24h'});
                         return res.json({ 
                             token: token,
                             userId: results[0].userID, 
