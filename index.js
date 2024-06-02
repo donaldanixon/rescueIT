@@ -61,7 +61,7 @@ app.listen(8080, () => {
 
 // Helper functions
 function invalidQuery(query) {
-    const sqlInjectionPattern = /\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|TRUNCATE|REPLACE|GRANT|REVOKE|UNION|EXEC|EXECUTE|DECLARE)\b|--|\/\*|\*\/|;/i;
+    const sqlInjectionPattern = /;\s*\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|TRUNCATE|REPLACE|GRANT|REVOKE|UNION|EXEC|EXECUTE|DECLARE)\b|--|\/\*|\*\/|;/i;
     return sqlInjectionPattern.test(query);
 }
 
@@ -283,7 +283,7 @@ app.get('/animals', authenticateToken, (req, res) => {
 // - Add animal
 app.post('/animals/add', authenticateToken, (req, res) => {
     console.log('Adding animal...')
-    let { animalName, animalDOB, animalMicrochipNum, species, breed, secondaryBreed, gender, colour, secondaryColour, litterID, photoFileName, fostererID, surrenderedByID, desexed, awaitingDesex, inShelter, awaitingFoster, underVetCare, deceased, deceasedDate, deceasedReason, incomingDate } = req.body;
+    let { animalName, animalDOB, animalMicrochipNum, species, breed, secondaryBreed, gender, colour, secondaryColour, litterID, photoFileName, fostererID, surrenderedByID, desexed, awaitingDesex, inShelter, inFoster, awaitingFoster, underVetCare, deceased, deceasedDate, deceasedReason, incomingDate } = req.body;
     if (!animalName) {
         return res.status(400).send("Animal name cannot be empty")
     }
@@ -351,6 +351,9 @@ app.post('/animals/add', authenticateToken, (req, res) => {
     if (typeof(inShelter) !== 'boolean') {
         return res.status(400).send('Not a valid in shelter value')
     }
+    if (typeof(inFoster) !== 'boolean') {
+        return res.status(400).send('Not a valid infoster value')
+    }
     if (typeof(awaitingFoster) !== 'boolean') {
         return res.status(400).send('Not a valid awaiting foster value')    
     }
@@ -374,7 +377,7 @@ app.post('/animals/add', authenticateToken, (req, res) => {
     }
 
     // Insert into database
-    req.pool.query('INSERT INTO animals (animalName, animalDOB, animalMicrochipNum, species, breed, secondaryBreed, gender, colour, secondaryColour, litterID, photoFileName, fostererID, surrenderedByID, desexed, awaitingDesex, inShelter, awaitingFoster, underVetCare, deceased, deceasedDate, deceasedReason, incomingDate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);', [animalName, animalDOB, animalMicrochipNum, species, breed, secondaryBreed, gender, colour, secondaryColour, litterID, photoFileName, fostererID, surrenderedByID, desexed, awaitingDesex, inShelter, awaitingFoster, underVetCare, deceased, deceasedDate, deceasedReason, incomingDate], (err, results) => {
+    req.pool.query('INSERT INTO animals (animalName, animalDOB, animalMicrochipNum, species, breed, secondaryBreed, gender, colour, secondaryColour, litterID, photoFileName, fostererID, surrenderedByID, desexed, awaitingDesex, inShelter, inFoster, awaitingFoster, underVetCare, deceased, deceasedDate, deceasedReason, incomingDate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);', [animalName, animalDOB, animalMicrochipNum, species, breed, secondaryBreed, gender, colour, secondaryColour, litterID, photoFileName, fostererID, surrenderedByID, desexed, awaitingDesex, inShelter, inFoster, awaitingFoster, underVetCare, deceased, deceasedDate, deceasedReason, incomingDate], (err, results) => {
         if (err) {
             return res.status(400).send(err)
         }
@@ -484,7 +487,7 @@ app.post('/animals/fosterer', authenticateToken, (req, res) => {
 
 app.patch('/animals/update', authenticateToken, (req, res) => {
     console.log('Updating animal...')
-    let { animalID, animalName, animalDOB, animalMicrochipNum, species, breed, secondaryBreed, gender, colour, secondaryColour, litterID, photoFileName, fostererID, surrenderedByID, desexed, awaitingDesex, inShelter, awaitingFoster, underVetCare, deceased, deceasedDate, deceasedReason, incomingDate } = req.body; 
+    let { animalID, animalName, animalDOB, animalMicrochipNum, species, breed, secondaryBreed, gender, colour, secondaryColour, litterID, photoFileName, fostererID, surrenderedByID, desexed, awaitingDesex, inShelter, awaitingFoster, inFoster, underVetCare, deceased, deceasedDate, deceasedReason, incomingDate } = req.body; 
 
     if (!animalID) {
         return res.status(400).send("Animal ID cannot be empty")
@@ -522,6 +525,7 @@ app.patch('/animals/update', authenticateToken, (req, res) => {
                 desexed = desexed || results[0].desexed;
                 awaitingDesex = awaitingDesex || results[0].awaitingDesex;
                 inShelter = inShelter || results[0].inShelter;
+                inFoster = inFoster || results[0].inFoster;
                 awaitingFoster = awaitingFoster || results[0].awaitingFoster;
                 underVetCare = underVetCare || results[0].underVetCare;
                 deceased = deceased || results[0].deceased;
@@ -588,6 +592,9 @@ app.patch('/animals/update', authenticateToken, (req, res) => {
     if (typeof(inShelter) !== 'boolean') {
         return res.status(400).send('Not a valid in shelter value')
     }
+    if (typeof(inFoster) !== 'boolean') {
+        return res.status(400).send('Not a valid infoster value')
+    }
     if (typeof(awaitingFoster) !== 'boolean') {
         return res.status(400).send('Not a valid awaiting foster value')    
     }
@@ -609,8 +616,11 @@ app.patch('/animals/update', authenticateToken, (req, res) => {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(incomingDate) && incomingDate !== "") {
         return res.status(400).send('Not a valid incoming date')
     }
+
+    if (inFoster === true) {awaitingFoster = false; inShelter = false;}
+
     // Update the item in the database
-    req.pool.query('UPDATE animals SET animalName = ?, animalDOB = ?, animalMicrochipNum = ?, species = ?, breed = ?, secondaryBreed = ?, gender = ?, colour = ?, secondaryColour = ?, litterID = ?, photoFileName = ?, fostererID = ?, surrenderedByID = ?, desexed = ?, awaitingDesex = ?, inShelter = ?, awaitingFoster = ?, underVetCare = ?, deceased = ?, deceasedDate = ?, deceasedReason = ?, incomingDate = ? WHERE animalID = ?;', [animalName, animalDOB, animalMicrochipNum, species, breed, secondaryBreed, gender, colour, secondaryColour, litterID, photoFileName, fostererID, surrenderedByID, desexed, awaitingDesex, inShelter, awaitingFoster, underVetCare, deceased, deceasedDate, deceasedReason, incomingDate, animalID], (err, results) => {
+    req.pool.query('UPDATE animals SET animalName = ?, animalDOB = ?, animalMicrochipNum = ?, species = ?, breed = ?, secondaryBreed = ?, gender = ?, colour = ?, secondaryColour = ?, litterID = ?, photoFileName = ?, fostererID = ?, surrenderedByID = ?, desexed = ?, awaitingDesex = ?, inShelter = ?, inFoster = ?, awaitingFoster = ?, underVetCare = ?, deceased = ?, deceasedDate = ?, deceasedReason = ?, incomingDate = ? WHERE animalID = ?;', [animalName, animalDOB, animalMicrochipNum, species, breed, secondaryBreed, gender, colour, secondaryColour, litterID, photoFileName, fostererID, surrenderedByID, desexed, awaitingDesex, inShelter, inFoster, awaitingFoster, underVetCare, deceased, deceasedDate, deceasedReason, incomingDate, animalID], (err, results) => {
         if (err) {
             return res.status(400).send(err)
         }
@@ -1250,7 +1260,7 @@ app.get('/weights/weight', authenticateToken, (req, res) => {
         return res.status(400).send('Not a valid animal ID')
     }
 
-    req.pool.query('SELECT * FROM weights WHERE animalID = ?;', [animalID], (err, results) => {
+    req.pool.query('SELECT * FROM weights WHERE animalID = ? ORDER BY weightID DESC;', [animalID], (err, results) => {
         if (err) {  
             return res.status(400).send(err)
         }
