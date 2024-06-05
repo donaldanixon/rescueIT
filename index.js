@@ -362,6 +362,7 @@ app.get('/animals', authenticateToken, async (req, res) => {
 // - Add animal
 app.post('/animals/add', authenticateToken, async (req, res) => {
     console.log('Adding animal...');
+    console.log(req.body);
     let { animalName, animalDOB, animalMicrochipNum, species, breed, secondaryBreed, gender, colour, secondaryColour, litterID, photoFileName, fostererID, surrenderedByID, desexed, awaitingDesex, inShelter, inFoster, awaitingFoster, underVetCare, deceased, deceasedDate, deceasedReason, incomingDate } = req.body;
     
     // Ensure required fields are provided
@@ -596,28 +597,28 @@ app.patch('/animals/update', authenticateToken, async (req, res) => {
     if (typeof(animalName) !== 'string' || animalName.length > 255) {
         return res.status(400).send('Not a valid animal name')
     }
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(animalDOB) && animalDOB !== "") {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(animalDOB) && animalDOB !== "" && animalDOB !== null) {
         return res.status(400).send('Not a valid DOB')
     }
-    if (typeof(animalMicrochipNum) !== 'string' || animalDOB.length > 255) {
+    if ((typeof(animalMicrochipNum) !== 'string' || animalMicrochipNum.length > 255) && animalMicrochipNum !== null) {
         return res.status(400).send('Not a valid animal microchip number')
     }
     if (typeof(species) !== 'string' || species.length > 255) {
         return res.status(400).send('Not a valid species')
     }
-    if (typeof(breed) !== 'string' || breed.length > 255) {
+    if ((typeof(breed) !== 'string' || breed.length > 255) && breed !== null) {
         return res.status(400).send('Not a valid breed')
     }
-    if (typeof(secondaryBreed) !== 'string' || secondaryBreed.length > 255) {
+    if ((typeof(secondaryBreed) !== 'string' || secondaryBreed.length > 255) && secondaryBreed !== null) {
         return res.status(400).send('Not a valid secondary breed')
     }
-    if (typeof(gender) !== 'string' || gender.length > 255) {
+    if ((typeof(gender) !== 'string' || gender.length > 255) && gender !== null) {
         return res.status(400).send('Not a valid gender')
     }
-    if (typeof(colour) !== 'string' || colour.length > 255) {  
+    if ((typeof(colour) !== 'string' || colour.length > 255) && colour !== null) {
         return res.status(400).send('Not a valid colour')
     }
-    if (typeof(secondaryColour) !== 'string' || secondaryColour.length > 255) {
+    if ((typeof(secondaryColour) !== 'string' || secondaryColour.length > 255) && secondaryColour !== null) {
         return res.status(400).send('Not a valid secondary colour')
     }
     if (typeof(litterID) !== 'number') {
@@ -625,7 +626,7 @@ app.patch('/animals/update', authenticateToken, async (req, res) => {
             return res.status(400).send('Not a valid litter ID')
         }
     }
-    if (typeof(photoFileName) !== 'string' || photoFileName.length > 255) {
+    if ((typeof(photoFileName) !== 'string' || photoFileName.length > 255) && photoFileName !== null) {
         return res.status(400).send('Not a valid photo file name')
     }
     if (typeof(fostererID) !== 'number') {
@@ -638,46 +639,46 @@ app.patch('/animals/update', authenticateToken, async (req, res) => {
             return res.status(400).send('Not a valid surrenderer ID')
         }
     }   
-    if (typeof(desexed) !== 'boolean') {
+    if (typeof(desexed) !== 'boolean' && desexed !== null) {
         return res.status(400).send('Not a valid desexed value')
     }
-    if (typeof(awaitingDesex) !== 'boolean') {
+    if (typeof(awaitingDesex) !== 'boolean' && awaitingDesex !== null) {
         return res.status(400).send('Not a valid awaiting desex value')
     }
-    if (typeof(inShelter) !== 'boolean') {
+    if (typeof(inShelter) !== 'boolean' && inShelter !== null) {
         return res.status(400).send('Not a valid in shelter value')
     }
-    if (typeof(inFoster) !== 'boolean') {
+    if (typeof(inFoster) !== 'boolean' && inFoster !== null) {
         return res.status(400).send('Not a valid infoster value')
     }
-    if (typeof(awaitingFoster) !== 'boolean') {
+    if (typeof(awaitingFoster) !== 'boolean' && awaitingFoster !== null) {
         return res.status(400).send('Not a valid awaiting foster value')    
     }
-    if (typeof(underVetCare) !== 'boolean') {
+    if (typeof(underVetCare) !== 'boolean' && underVetCare !== null) {
         return res.status(400).send('Not a valid under vet care value')
     }
-    if (typeof(deceased) !== 'boolean') {
+    if (typeof(deceased) !== 'boolean' && deceased !== null) {
         return res.status(400).send('Not a valid deceased value')
     }
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(deceasedDate) && deceasedDate !== "") {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(deceasedDate) && deceasedDate !== "" && deceasedDate !== null) {
         return res.status(400).send('Not a valid deceased date')
     }
     if (deceasedDate === "") {
         deceasedDate = null
     }
-    if (typeof(deceasedReason) !== 'string' || deceasedReason.length > 255) {
+    if ((typeof(deceasedReason) !== 'string' || deceasedReason.length > 255) && deceasedReason !== null) {
         return res.status(400).send('Not a valid deceased reason')
     }
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(incomingDate) && incomingDate !== "") {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(incomingDate) && incomingDate !== "" && incomingDate !== null) {
         return res.status(400).send('Not a valid incoming date')
     }
 
     if (inFoster === true) {awaitingFoster = false; inShelter = false;}
 
     // Update the item in the database
-
     try {
-        const req = await pool.request()
+        const pool = req.pool;
+        const result = await pool.request()
         .input('animalID', sql.Int, animalID)
         .input('animalName', sql.VarChar(255), animalName)
         .input('animalDOB', sql.VarChar(255), animalDOB)
@@ -704,14 +705,20 @@ app.patch('/animals/update', authenticateToken, async (req, res) => {
         .input('incomingDate', sql.VarChar(255), incomingDate)
         .query('UPDATE animals SET animalName = @animalName, animalDOB = @animalDOB, animalMicrochipNum = @animalMicrochipNum, species = @species, breed = @breed, secondaryBreed = @secondaryBreed, gender = @gender, colour = @colour, secondaryColour = @secondaryColour, litterID = @litterID, photoFileName = @photoFileName, fostererID = @fostererID, surrenderedByID = @surrenderedByID, desexed = @desexed, awaitingDesex = @awaitingDesex, inShelter = @inShelter, inFoster = @inFoster, awaitingFoster = @awaitingFoster, underVetCare = @underVetCare, deceased = @deceased, deceasedDate = @deceasedDate, deceasedReason = @deceasedReason, incomingDate = @incomingDate WHERE animalID = @animalID;')
 
-    } catch (err) {
+        console.log(result)
+        return res.json({
+            updated: true
+        })
+    } 
+    catch (err) {
+        console.log(err)
         return res.status(400).send(err)
     }
 });
 
 
 // Delete animal
-app.delete('/animals/delete', authenticateToken, (req, res) => {
+app.delete('/animals/delete', authenticateToken, async (req, res) => {
     console.log('Deleting animal...')
     let { animalID } = req.body;
 
@@ -721,11 +728,11 @@ app.delete('/animals/delete', authenticateToken, (req, res) => {
 
     try {
         const pool = req.pool;
-        const req = pool.request()
+        const request = await pool.request()
         .input('animalID', sql.Int, animalID)
         .query('DELETE FROM animals WHERE animalID = @animalID;')
 
-        if (!req) {
+        if (!request) {
             return res.status(400).send("Animal ID not found")
         }
         else {
@@ -741,12 +748,12 @@ app.delete('/animals/delete', authenticateToken, (req, res) => {
 
 
 // Fetch fosterers
-app.get('/fosterers', authenticateToken, (req, res) => {
+app.get('/fosterers', authenticateToken, async (req, res) => {
     console.log('Fetching fosterers...');
 
     try {
         const pool = req.pool;
-        const results = pool.request()
+        const results = await pool.request()
         .query('SELECT * FROM fosterers ORDER BY fostererID DESC;')
         if (!results) {
             return res.status(400).send("Fosterers not found")
