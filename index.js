@@ -52,9 +52,15 @@ app.use(limiter);
 const corsOptions = {
     origin: '*',
     methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    optionsSuccessStatus: 200
+    allowedHeaders: ['Content-Type', 'Authorization']
 };
+
+// Middleware to handle OPTIONS requests
+app.options('*', (req, res) => {
+    res.set(corsOptions);
+    res.status(200).send();
+});
+
 app.use(cors(corsOptions));
 
 // Middleware to attach the pool to the request
