@@ -1,5 +1,5 @@
 const express = require('express');
-const cors = require('cors');
+// const cors = require('cors');
 const sql = require('mssql');
 const bcrypt = require('bcrypt');
 const rateLimit = require('express-rate-limit');
@@ -52,18 +52,17 @@ app.use(limiter);
 const corsOptions = {
     origin: '*',
     methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: ['Content-Type', 'Authorization', 'Bananas']
 };
 
 // Middleware to handle OPTIONS requests
 app.options('*', (req, res) => {
     res.set('Access-Control-Allow-Methods', corsOptions.methods.join(','));
     res.set('Access-Control-Allow-Headers', corsOptions.allowedHeaders.join(','));
-    res.set('Access-Control-Allow-Origin', corsOptions.origin);
-    res.status(200).send();
+    res.status(204).send();
 });
 
-app.use(cors(corsOptions));
+// app.use(cors(corsOptions));
 
 // Middleware to attach the pool to the request
 app.use(async (req, res, next) => {   
