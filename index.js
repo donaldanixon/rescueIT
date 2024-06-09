@@ -23,7 +23,7 @@ const config = {
       min: 0, 
       idleTimeoutMillis: 30000
     }
-  };
+};
 
 // Create a connection pool
 const poolPromise = new sql.ConnectionPool(config)
@@ -39,37 +39,47 @@ const poolPromise = new sql.ConnectionPool(config)
 
 // Setup Express App
 const app = express();
+app.use(express.json());
+
+// Rate limiting middleware
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100 // Limit each IP to 100 requests per windowMs
+});
+app.use(limiter);
+
+// CORS options
+const corsOptions = {
+    methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    preflightContinue: true
+};
+app.use(cors(corsOptions));
 
 // Middleware to attach the pool to the request
 app.use(async (req, res, next) => {
-try {
-    req.pool = await poolPromise;
-    next();
-} catch (err) {
-    next(err);
-}
+    try {
+        req.pool = await poolPromise;
+        next();
+    } catch (err) {
+        next(err);
+    }
 });
 
-// Handle preflight requests
+// Handle preflight requests for private network
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE'); 
     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization'); 
     res.header('Access-Control-Allow-Private-Network', 'true');
   
     if (req.method === 'OPTIONS') {
-      res.sendStatus(200); // Respond to preflight requests
+        res.sendStatus(200); // Respond to preflight requests
     } else {
-      next();
+        next();
     }
 });
 
-// Rate limiting middleware
-const limiter = rateLimit({
-windowMs: 15 * 60 * 1000, // 15 minutes
-max: 100 // Limit each IP to 100 requests per windowMs
-});
-app.use(limiter);
-
+// Authentication middleware
 const authenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
@@ -83,19 +93,9 @@ const authenticateToken = (req, res, next) => {
     });
 };
 
-
-const corsOptions = {
-    methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    preflightContinue: true
-  };
-app.use(cors(corsOptions));
-  
-app.use(express.json());
 app.listen(8080, () => {
-    console.log('Listening on port 8080')
-    }
-);
+    console.log('Listening on port 8080');
+});
 
 // Helper functions
 function invalidQuery(query) {
