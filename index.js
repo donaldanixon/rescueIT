@@ -57,6 +57,7 @@ const limiter = rateLimit({
 windowMs: 15 * 60 * 1000, // 15 minutes
 max: 100 // Limit each IP to 100 requests per windowMs
 });
+app.use(limiter);
 
 const authenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
@@ -71,8 +72,12 @@ const authenticateToken = (req, res, next) => {
     });
 };
 
-app.use(limiter);
-app.use(cors());
+
+const corsOptions = {
+    methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  };
+app.use(cors(corsOptions));
+  
 app.use(express.json());
 app.listen(8080, () => {
     console.log('Listening on port 8080')
@@ -225,6 +230,40 @@ app.get('/users', authenticateToken, async (req, res) => {
     }
 });
 
+
+// - Update username
+app.patch('/users/updateusername', authenticateToken, async (req, res) => {
+    console.log('Updating username...');
+    let { username, newusername } = req.body;
+    
+    if (!username) {
+        return res.status(400).send("Username cannot be empty");
+    }
+    if (!newusername) {
+        return res.status(400).send("New Username cannot be empty");
+    }
+
+    // Validate query
+    if (invalidQuery(username) || invalidQuery(newusername)) {
+        return res.status(400).send('Invalid query');
+    }
+
+    try {
+        const pool = await req.pool;
+        const result = await pool.request()
+            .input('username', sql.VarChar, username)
+            .input('newusername', sql.VarChar, newusername)
+            .query('UPDATE users SET username = @newusername WHERE username = @username');
+
+        return res.json({
+            updated: true
+        });
+    } 
+    catch (err) {
+        console.log(err);
+        return res.status(400).send(err);
+    }
+});
 
 // - Update password
 app.patch('/users/updatepassword', authenticateToken, async (req, res) => {
