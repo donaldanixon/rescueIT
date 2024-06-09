@@ -57,25 +57,19 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // Middleware to attach the pool to the request
-app.use(async (req, res, next) => {
+app.use(async (req, res, next) => {   
+    if (req.method === 'OPTIONS') {
+        res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE');
+        res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+        res.header('Access-Control-Allow-Private-Network', 'true');
+        res.sendStatus(200); // Send 200 OK for preflight requests
+    } 
+    
     try {
         req.pool = await poolPromise;
         next();
     } catch (err) {
         next(err);
-    }
-});
-
-// Handle preflight requests for private network
-app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE'); 
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization'); 
-    res.header('Access-Control-Allow-Private-Network', 'true');
-  
-    if (req.method === 'OPTIONS') {
-        res.sendStatus(200); // Respond to preflight requests
-    } else {
-        next();
     }
 });
 
