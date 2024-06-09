@@ -59,9 +59,13 @@ app.use(cors(corsOptions));
 // Middleware to attach the pool to the request
 app.use(async (req, res, next) => {   
     if (req.method === 'OPTIONS') {
+        console.log('OPTIONS request received');
         res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE');
         res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
         res.header('Access-Control-Allow-Private-Network', 'true');
+        res.header('Access-Control-Allow-Origin', '*');
+        res.header('Access-Control-Allow-Credentials', 'true');
+        console.log(res.header);
         res.sendStatus(200); // Send 200 OK for preflight requests
     } 
     
