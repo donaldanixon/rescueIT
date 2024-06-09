@@ -53,7 +53,7 @@ const corsOptions = {
     origin: '*',
     methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
-    preflightContinue: false
+    optionsSuccessStatus: 200
 };
 app.use(cors(corsOptions));
 
