@@ -39,8 +39,6 @@ const poolPromise = new sql.ConnectionPool(config)
 
 // Setup Express App
 const app = express();
-app.use(cors());
-app.use(express.json());
 
 // Middleware to attach the pool to the request
 app.use(async (req, res, next) => {
@@ -56,6 +54,7 @@ try {
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE'); 
     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization'); 
+    res.header('Access-Control-Allow-Private-Network', 'true');
   
     if (req.method === 'OPTIONS') {
       res.sendStatus(200); // Respond to preflight requests
@@ -87,6 +86,8 @@ const authenticateToken = (req, res, next) => {
 
 const corsOptions = {
     methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    preflightContinue: true
   };
 app.use(cors(corsOptions));
   
