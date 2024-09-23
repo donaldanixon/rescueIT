@@ -52,7 +52,7 @@ app.use(limiter);
 const corsOptions = {
     origin: '*',
     methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Bananas'],
+    allowedHeaders: ['Origin', 'Accept', 'Content-Type', 'Authorization', 'X-Requested-With'],
     preflightContinue: true
 };
 
