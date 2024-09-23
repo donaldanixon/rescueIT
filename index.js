@@ -64,7 +64,7 @@ app.options('*', (req, res) => {
     res.status(204).send();
 });
 
-// app.use(cors(corsOptions));
+app.use(cors(corsOptions));
 
 // Middleware to attach the pool to the request
 app.use(async (req, res, next) => {   
