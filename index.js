@@ -587,14 +587,14 @@ app.post('/animals/fosterer', authenticateToken, async (req, res) => {
 
 app.patch('/animals/update', authenticateToken, async (req, res) => {
     console.log('Updating animal...')
-    let { animalID, animalName, animalDOB, animalMicrochipNum, species, breed, secondaryBreed, gender, colour, secondaryColour, litterID, photoFileName, fostererID, surrenderedByID, desexed, awaitingDesex, inShelter, awaitingFoster, inFoster, underVetCare, deceased, deceasedDate, deceasedReason, incomingDate } = req.body; 
+    let { animalID, animalName, animalDOB, animalMicrochipNum, species, breed, secondaryBreed, gender, colour, secondaryColour, litterID, photoFileName, fostererID, surrenderedByID, desexed, awaitingDesex, inShelter, awaitingFoster, inFoster, underVetCare, deceased, deceasedDate, deceasedReason, incomingDate, historyTemp } = req.body; 
 
     if (!animalID) {
         return res.status(400).send("Animal ID cannot be empty")
     }
 
     // Validate query
-    if (invalidQuery(animalID) || invalidQuery(animalName) || invalidQuery(animalDOB) || invalidQuery(animalMicrochipNum) || invalidQuery(species) || invalidQuery(breed) || invalidQuery(secondaryBreed) || invalidQuery(gender) || invalidQuery(colour) || invalidQuery(secondaryColour) || invalidQuery(litterID) || invalidQuery(photoFileName) || invalidQuery(fostererID) || invalidQuery(surrenderedByID) || invalidQuery(deceasedDate) || invalidQuery(deceasedReason) || invalidQuery(incomingDate)) {
+    if (invalidQuery(animalID) || invalidQuery(animalName) || invalidQuery(animalDOB) || invalidQuery(animalMicrochipNum) || invalidQuery(species) || invalidQuery(breed) || invalidQuery(secondaryBreed) || invalidQuery(gender) || invalidQuery(colour) || invalidQuery(secondaryColour) || invalidQuery(litterID) || invalidQuery(photoFileName) || invalidQuery(fostererID) || invalidQuery(surrenderedByID) || invalidQuery(deceasedDate) || invalidQuery(deceasedReason) || invalidQuery(incomingDate) || invalidQuery(historyTemp)) {
         return res.status(400).send('Invalid query')
     }
 
@@ -631,6 +631,7 @@ app.patch('/animals/update', authenticateToken, async (req, res) => {
         deceasedDate = deceasedDate || results[0].deceasedDate;
         deceasedReason = deceasedReason || results[0].deceasedReason;
         incomingDate = incomingDate || results[0].incomingDate;
+        historyTemp = historyTemp || results[0].historyTemp;
     
         if (inFoster === true) {
             awaitingFoster = false; 
@@ -721,6 +722,9 @@ app.patch('/animals/update', authenticateToken, async (req, res) => {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(incomingDate) && incomingDate !== "" && incomingDate !== null) {
         return res.status(400).send('Not a valid incoming date')
     }
+    if ((typeof(historyTemp) !== 'string' || historyTemp.length > 65535) && historyTemp !== null) {
+        return res.status(400).send('Not a valid animal history')
+    }
 
     if (inFoster === true) {awaitingFoster = false; inShelter = false;}
 
@@ -752,7 +756,8 @@ app.patch('/animals/update', authenticateToken, async (req, res) => {
         .input('deceasedDate', sql.VarChar(255), deceasedDate)
         .input('deceasedReason', sql.VarChar(255), deceasedReason)
         .input('incomingDate', sql.VarChar(255), incomingDate)
-        .query('UPDATE animals SET animalName = @animalName, animalDOB = @animalDOB, animalMicrochipNum = @animalMicrochipNum, species = @species, breed = @breed, secondaryBreed = @secondaryBreed, gender = @gender, colour = @colour, secondaryColour = @secondaryColour, litterID = @litterID, photoFileName = @photoFileName, fostererID = @fostererID, surrenderedByID = @surrenderedByID, desexed = @desexed, awaitingDesex = @awaitingDesex, inShelter = @inShelter, inFoster = @inFoster, awaitingFoster = @awaitingFoster, underVetCare = @underVetCare, deceased = @deceased, deceasedDate = @deceasedDate, deceasedReason = @deceasedReason, incomingDate = @incomingDate WHERE animalID = @animalID;')
+        .input('historyTemp', sql.VarChar(65535), historyTemp)
+        .query('UPDATE animals SET animalName = @animalName, animalDOB = @animalDOB, animalMicrochipNum = @animalMicrochipNum, species = @species, breed = @breed, secondaryBreed = @secondaryBreed, gender = @gender, colour = @colour, secondaryColour = @secondaryColour, litterID = @litterID, photoFileName = @photoFileName, fostererID = @fostererID, surrenderedByID = @surrenderedByID, desexed = @desexed, awaitingDesex = @awaitingDesex, inShelter = @inShelter, inFoster = @inFoster, awaitingFoster = @awaitingFoster, underVetCare = @underVetCare, deceased = @deceased, deceasedDate = @deceasedDate, deceasedReason = @deceasedReason, incomingDate = @incomingDate, historyTemp = @historyTemp WHERE animalID = @animalID;')
 
         console.log(result)
         return res.json({
