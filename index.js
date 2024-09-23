@@ -48,23 +48,23 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// CORS options
-const corsOptions = {
-    origin: '*',
-    methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Bananas'],
-    preflightContinue: true
-};
+// // CORS options
+// const corsOptions = {
+//     origin: '*',
+//     methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+//     allowedHeaders: ['Content-Type', 'Authorization', 'Bananas'],
+//     preflightContinue: true
+// };
 
-// Middleware to handle OPTIONS requests
-app.options('*', (req, res) => {
-    res.set('Access-Control-Allow-Origin', corsOptions.origin);
-    res.set('Access-Control-Allow-Methods', corsOptions.methods.join(','));
-    res.set('Access-Control-Allow-Headers', corsOptions.allowedHeaders.join(','));
-    res.status(204).send();
-});
+// // Middleware to handle OPTIONS requests
+// app.options('*', (req, res) => {
+//     res.set('Access-Control-Allow-Origin', corsOptions.origin);
+//     res.set('Access-Control-Allow-Methods', corsOptions.methods.join(','));
+//     res.set('Access-Control-Allow-Headers', corsOptions.allowedHeaders.join(','));
+//     res.status(204).send();
+// });
 
-app.use(cors(corsOptions));
+// app.use(cors(corsOptions));
 
 // Middleware to attach the pool to the request
 app.use(async (req, res, next) => {   
