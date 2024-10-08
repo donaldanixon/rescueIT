@@ -59,6 +59,13 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
+app.options('', (req, res) => { 
+    res.set('Access-Control-Allow-Origin', ''); 
+    res.set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS'); 
+    res.set('Access-Control-Allow-Headers', 'Origin, Accept, Content-Type, Authorization, X-Requested-With'); 
+    res.status(204).end(); 
+});
+
 
 // Middleware to attach the pool to the request
 app.use(async (req, res, next) => {   
@@ -75,10 +82,10 @@ const authenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
   
-    if (!token) return res.status(401).send("Missing header");
+    if (!token) return res.status(401).json({message: "Missing header"});
   
     jwt.verify(token, jwtSecret, (err, user) => {
-      if (err) return res.status(401).send("Invalid token");
+      if (err) return res.status(401).json({message: "Invalid token"});
       req.user = user;
       next();
     });
@@ -149,7 +156,7 @@ app.post('/users/login', async (req, res) => {
                 });
             } else {
                 console.log('Incorrect password');
-                return res.status(401).send('Incorrect password');
+                return res.status(401).json({message: 'Incorrect password'});
             }
         });
     } catch (err) {
