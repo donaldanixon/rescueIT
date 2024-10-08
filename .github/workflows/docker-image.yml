@@ -16,7 +16,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
     - name: Build the Docker image
-      run: docker build . --file dockerfile --tag swisskiwi2004/rescueit-test:1.1
+      run: docker build . --file dockerfile --tag swisskiwi2004/rescueit-test:1.2
 
     - name: Login to Docker Hub
       uses: docker/login-action@v3
