@@ -48,23 +48,18 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// CORS options
+// CORS setup
+const cors = require('cors');
+
 const corsOptions = {
-    origin: '*',
-    methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    origin: '*', 
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Origin', 'Accept', 'Content-Type', 'Authorization', 'X-Requested-With'],
-    preflightContinue: true
+    optionsSuccessStatus: 204, 
 };
 
-// Middleware to handle OPTIONS requests
-app.options('*', (req, res) => {
-    res.set('Access-Control-Allow-Origin', corsOptions.origin);
-    res.set('Access-Control-Allow-Methods', corsOptions.methods.join(','));
-    res.set('Access-Control-Allow-Headers', corsOptions.allowedHeaders.join(','));
-    res.status(204).send();
-});
-
 app.use(cors(corsOptions));
+
 
 // Middleware to attach the pool to the request
 app.use(async (req, res, next) => {   
