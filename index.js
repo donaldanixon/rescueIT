@@ -645,6 +645,7 @@ app.patch('/animals/update', authenticateToken, async (req, res) => {
         return res.status(400).send(err);
     }
 
+    console.log('Litter ID type = ' + typeof(litterID))
     // Validate typings
     if (typeof(animalName) !== 'string' || animalName.length > 255) {
         return res.status(400).send('Not a valid animal name')
