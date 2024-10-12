@@ -413,7 +413,7 @@ app.get('/animals', authenticateToken, async (req, res) => {
 app.post('/animals/add', authenticateToken, async (req, res) => {
     console.log('Adding animal...');
     console.log(req.body);
-    let { animalName, animalDOB, animalMicrochipNum, species, breed, secondaryBreed, gender, colour, secondaryColour, litterID, photoFileName, fostererID, surrenderedByID, desexed, awaitingDesex, inShelter, inFoster, awaitingFoster, underVetCare, deceased, deceasedDate, deceasedReason, incomingDate } = req.body;
+    let { animalName, animalDOB, animalMicrochipNum, species, breed, secondaryBreed, gender, colour, secondaryColour, litterID, photoFileName, fostererID, surrenderedByID, desexed, awaitingDesex, inShelter, inFoster, awaitingFoster, underVetCare, deceased, deceasedDate, deceasedReason, incomingDate, historyTemp } = req.body;
     
     // Ensure required fields are provided
     if (!animalName) {
@@ -424,7 +424,7 @@ app.post('/animals/add', authenticateToken, async (req, res) => {
     }
 
     // Validate query
-    if (invalidQuery(animalName) || invalidQuery(animalMicrochipNum) || invalidQuery(species) || invalidQuery(breed) || invalidQuery(secondaryBreed) || invalidQuery(gender) || invalidQuery(colour) || invalidQuery(photoFileName)) {
+    if (invalidQuery(animalName) || invalidQuery(animalMicrochipNum) || invalidQuery(species) || invalidQuery(breed) || invalidQuery(secondaryBreed) || invalidQuery(gender) || invalidQuery(colour) || invalidQuery(photoFileName) || invalidQuery(historyTemp)) {
         return res.status(400).send('Invalid query');
     }
 
@@ -456,10 +456,11 @@ app.post('/animals/add', authenticateToken, async (req, res) => {
             .input('deceasedDate', sql.Date, deceasedDate)
             .input('deceasedReason', sql.VarChar, deceasedReason)
             .input('incomingDate', sql.Date, incomingDate)
+            .input('historyTemp', sql.VarChar, historyTemp)
             .query(`INSERT INTO animals 
-                    (animalName, animalDOB, animalMicrochipNum, species, breed, secondaryBreed, gender, colour, secondaryColour, litterID, photoFileName, fostererID, surrenderedByID, desexed, awaitingDesex, inShelter, inFoster, awaitingFoster, underVetCare, deceased, deceasedDate, deceasedReason, incomingDate) 
+                    (animalName, animalDOB, animalMicrochipNum, species, breed, secondaryBreed, gender, colour, secondaryColour, litterID, photoFileName, fostererID, surrenderedByID, desexed, awaitingDesex, inShelter, inFoster, awaitingFoster, underVetCare, deceased, deceasedDate, deceasedReason, incomingDate, historyTemp) 
                     VALUES 
-                    (@animalName, @animalDOB, @animalMicrochipNum, @species, @breed, @secondaryBreed, @gender, @colour, @secondaryColour, @litterID, @photoFileName, @fostererID, @surrenderedByID, @desexed, @awaitingDesex, @inShelter, @inFoster, @awaitingFoster, @underVetCare, @deceased, @deceasedDate, @deceasedReason, @incomingDate)`);
+                    (@animalName, @animalDOB, @animalMicrochipNum, @species, @breed, @secondaryBreed, @gender, @colour, @secondaryColour, @litterID, @photoFileName, @fostererID, @surrenderedByID, @desexed, @awaitingDesex, @inShelter, @inFoster, @awaitingFoster, @underVetCare, @deceased, @deceasedDate, @deceasedReason, @incomingDate, @historyTemp);`);
         
         return res.json({ created: true });
     } catch (err) {
