@@ -430,7 +430,7 @@ app.post('/animals/add', authenticateToken, async (req, res) => {
 
     try {
         const pool = await req.pool;
-
+        console.log("historyTemp = " + historyTemp);
         // Insert into database
         const result = await pool.request()
             .input('animalName', sql.VarChar, animalName)
