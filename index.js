@@ -674,7 +674,7 @@ app.patch('/animals/update', authenticateToken, async (req, res) => {
         return res.status(400).send('Not a valid secondary colour')
     }
     if (typeof(litterID) !== 'number') {
-        if (litterID !== null) {
+        if (litterID !== null && !/[0-9]/.test(litterID)) {
             return res.status(400).send('Not a valid litter ID')
         }
     }
